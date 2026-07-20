@@ -7,7 +7,7 @@
 - 何时看：改错误码、`BusinessException`、HTTP 状态、数据库错误转换、响应 envelope 时先看本篇。
 - 必做：可预期业务失败统一抛 `BusinessException` 并引用共享错误码；数据库错误通过 Drizzle 边界收口；HTTP 与 WS 使用各自显式 mapper。
 - 不要：用 Nest HTTP 异常代替业务异常，不要手写错误码、匹配 `error.message`，也不要让 WS 隐式继承 HTTP filter/interceptor。
-- 最低验证：`pnpm type-check` 与目标 HTTP/WS e2e；数据库映射变化再跑 integration。
+- 最低验证：`pnpm type-check` 与目标 HTTP/WS e2e；数据库错误边界变化加跑 `pnpm db:error:check`，数据库映射变化再跑 integration。
 
 ## 仓库约定
 
@@ -29,7 +29,8 @@
 - `BusinessException` 默认 HTTP 状态由 `getBusinessErrorHttpStatus(...)` 决定。
 - 同一业务码在鉴权、账号封禁等特殊上下文需要不同协议状态时，通过 `httpStatus` 显式覆盖。
 - 数据库读写优先通过 `drizzle.withErrorHandling(...)`、`drizzle.withTransaction(...)`、`drizzle.assertAffectedRows(...)` 收口。
-- 业务层若需要感知 PostgreSQL 细节，通过 `extractError(...)`、共享错误描述器或 `withErrorHandling` 的映射能力获取。
+- 业务层若需要感知 PostgreSQL 细节，只能通过 `drizzle.classifyError(...)` 获取安全的 `PostgresErrorFacts`，并基于 `sqlState`、`constraint` 等显式字段分支。
+- transport 层若需要复用数据库错误策略，只能使用 `classifyPostgresError(...)` 与 `getPostgresErrorResponseDescriptor(...)` 这类纯 classifier / descriptor，不共享 HTTP/WS adapter。
 - 不要自行解析驱动错误字符串。
 - 成功 `POST` 的状态码与 `@HttpCode()` 约定遵循 [02-controller.md](./02-controller.md) 的“返回语义”小节；本篇不重复定义。
 
@@ -46,13 +47,18 @@
 
 ## 错误码与映射
 
-- 平台层固定 code 以 `PlatformErrorCode` 为准：`BAD_REQUEST`、`VALIDATION_FAILED`、`UNAUTHORIZED`、`FORBIDDEN`、`ROUTE_NOT_FOUND`、`PAYLOAD_TOO_LARGE`、`RATE_LIMITED`、`HTTP_ERROR`、`INTERNAL_SERVER_ERROR`。
+- 平台层固定 code 以 `PlatformErrorCode` 为准：`BAD_REQUEST`、`VALIDATION_FAILED`、`UNAUTHORIZED`、`FORBIDDEN`、`ROUTE_NOT_FOUND`、`PAYLOAD_TOO_LARGE`、`RATE_LIMITED`、`HTTP_ERROR`、`SERVICE_UNAVAILABLE`、`INTERNAL_SERVER_ERROR`。
 - 业务层固定 code 以 `BusinessErrorCode` 为准：`RESOURCE_NOT_FOUND`、`RESOURCE_ALREADY_EXISTS`、`STATE_CONFLICT`、`OPERATION_NOT_ALLOWED`、`QUOTA_NOT_ENOUGH`、`INVALID_OPERATION_TARGET`。
-- `db/core/error/postgres-error.ts` 是 PostgreSQL 默认错误码映射的单一来源。
+- `db/core/error/postgres-error.ts` 是 PostgreSQL 默认错误码映射、SQLSTATE 分类与响应 descriptor 的单一来源。
+- `PostgresErrorFacts` 是业务层可见的安全错误事实，只允许包含 `source`、`sqlState`、`sqlStateClass`、`category`、`retryable`、`schema`、`constraint`、`table`、`column`。
+- `PostgresErrorFacts` 禁止包含 `query`、`params`、`message`、`detail`、raw stack 或可恢复 SQL 参数。
+- `DrizzleQueryError` 只允许在 `db/core` 边界解包；`apps/*` 与 `libs/*` 不得 import、`instanceof` 或复制 Drizzle 内部错误形状。
+- SQLSTATE 必须按 PostgreSQL 5 字符格式校验；非 SQLSTATE 字符串不得被当作数据库错误码。
 - `NOT NULL` 约束默认映射为 HTTP 400 / `BAD_REQUEST`。
 - `CHECK` 约束默认映射为 HTTP 422 / `VALIDATION_FAILED`。
 - 唯一约束冲突默认映射为 HTTP 409 / `RESOURCE_ALREADY_EXISTS`。
 - 序列化失败、乐观并发冲突默认映射为 HTTP 409 / `STATE_CONFLICT`。
+- PostgreSQL 连接类错误（SQLSTATE class `08`）默认映射为 HTTP 503 / `SERVICE_UNAVAILABLE`。
 - 0 行变更且语义为目标不存在时默认映射为 HTTP 404 / `RESOURCE_NOT_FOUND`。
 - 数据库错误若被转换为业务异常，必须保留原始 `cause`，不能丢失底层上下文。
 - 新增错误码必须同步更新 `libs/platform/src/constant/error-code.constant.ts` 常量定义与本规范文档的错误码列表。
@@ -61,7 +67,9 @@
 
 ## 日志与诊断
 
-- 统一记录 `responseCode`、`businessCode`、`httpStatus`、`errorCode`、`constraint`、`table`、`column`、`detail` 等结构化字段。
+- 统一记录 `responseCode`、`businessCode`、`httpStatus`、`sqlState`、`sqlStateClass`、`category`、`source`、`constraint`、`table`、`column` 等安全结构化字段。
+- pool / listener / health / lifecycle 等非 Drizzle 查询链路必须显式传入或标记错误来源，例如 `source: "postgres-pool"`，不能让诊断误报为查询错误。
+- 日志、diagnostic、health response、HTTP filter 与 WS mapper 不得输出 SQL query、params、driver detail、raw stack 或 `DrizzleQueryError.message`；stack 只能按已脱敏的有限 frame 列表记录。
 - 禁止通过匹配 `message` 文本来反推错误码或业务语义。
 - 若业务层 catch 后重新抛出异常，必须保留原始 `cause`、`httpStatus` 或等价上下文。
 - 不要只保留一条新的字符串 message。
@@ -80,6 +88,7 @@
 - 禁止新增数字形式的 API 响应码字面量。
 - 禁止在 controller 中捕获数据库错误后再重复翻译一遍业务语义。
 - 禁止依赖异常 message 字符串做业务分支。
+- 禁止在 `apps/*` 或 `libs/*` 直接读取 `DrizzleQueryError.query`、`DrizzleQueryError.params`、`message`、`detail` 或 raw stack。
 - 禁止把正常幂等路径写成“先执行，再靠异常判断是否重复”。
 - 禁止为了省事吞掉异常、降级为 `null` / `false` / 空数组而不保留错误语义。
 - 禁止为旧调用方保留 error-code alias、旧 envelope mapper、双 status 分支或 silent fallback。
@@ -90,7 +99,7 @@
 - 允许：`throw new BusinessException(BusinessErrorCode.RESOURCE_NOT_FOUND, '应用用户不存在')`
 - 允许：`throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, '账号已封禁', { httpStatus: HttpStatus.FORBIDDEN })`
 - 允许：`await this.drizzle.withErrorHandling(() => persist(this.db), { notFound: '用户不存在' })`
-- 允许：在业务层捕获唯一约束冲突后，基于共享错误码转换为 `BusinessException`，同时保留 `cause`。
+- 允许：在业务层捕获唯一约束冲突后，通过 `this.drizzle.classifyError(error)` 判断 `facts?.sqlState === PostgresErrorCode.UNIQUE_VIOLATION` 与目标 `constraint`，再转换为 `BusinessException` 并保留 `cause`。
 - 禁止：`throw new NotFoundException('用户不存在')` 来表达业务资源不存在。
 - 禁止：`throw new BusinessException(20001, '用户不存在')`
 - 禁止：`throw new BusinessException('RESOURCE_NOT_FOUND', '用户不存在')`

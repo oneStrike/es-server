@@ -1,7 +1,10 @@
 import type { FastifyReply, FastifyRequest } from 'fastify'
 import type { ErrorDescriptor } from './http-exception-filter.type'
-import { extractError, getPostgresErrorResponseDescriptor } from '@db/core'
-
+import {
+  buildSafeDatabaseDiagnostic,
+  classifyPostgresError,
+  getPostgresErrorResponseDescriptor,
+} from '@db/core'
 import {
   getBusinessErrorHttpStatus,
   getPlatformErrorCode,
@@ -62,38 +65,27 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const response = ctx.getResponse<FastifyReply>()
     const request = ctx.getRequest<FastifyRequest>()
 
-    const {
-      status,
-      responseCode,
-      message,
-      code,
-      constraint,
-      table,
-      column,
-      detail,
-      businessCode,
-    } = this.extractErrorInfo(exception)
+    const { status, responseCode, message, databaseDiagnostic, businessCode } =
+      this.extractErrorInfo(exception)
     const parsed = this.safeParse(request)
     const logger = this.loggerService.getLoggerWithContext('http-exception')
 
     logger.log({
       level: status >= HttpStatus.INTERNAL_SERVER_ERROR ? 'error' : 'warn',
       message: 'http_exception',
-      errorCode: code,
-      errorConstraint: constraint,
-      errorTable: table,
-      errorColumn: column,
-      errorDetail: detail,
+      database: databaseDiagnostic,
       businessCode,
       responseCode,
       httpStatus: status,
       errorMessage: message,
-      stack: exception instanceof Error ? exception.stack : undefined,
+      stack:
+        databaseDiagnostic?.stackFrames.length === 0
+          ? undefined
+          : databaseDiagnostic?.stackFrames,
       status,
       path: parsed?.path,
       method: parsed?.method,
       ip: parsed?.ip,
-      params: parsed?.params,
     })
 
     response.code(status).send({
@@ -106,6 +98,9 @@ export class HttpExceptionFilter implements ExceptionFilter {
   // 提取异常信息 按优先级处理：HttpException > Postgres 错误 > 未知错误。 对于数据库错误，尽可能提取约束、表名、字段等上下文信息。
   private extractErrorInfo(exception: unknown) {
     const postgresError = this.extractPostgresError(exception)
+    const databaseDiagnostic = postgresError
+      ? buildSafeDatabaseDiagnostic(exception)
+      : undefined
 
     if (exception instanceof BusinessException) {
       const status =
@@ -115,11 +110,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
         responseCode: exception.code,
         message: exception.message,
         businessCode: exception.code,
-        code: postgresError?.code,
-        constraint: postgresError?.constraint,
-        table: postgresError?.table,
-        column: postgresError?.column,
-        detail: postgresError?.detail,
+        databaseDiagnostic,
       }
     }
 
@@ -139,19 +130,14 @@ export class HttpExceptionFilter implements ExceptionFilter {
           ? PlatformErrorCode.ROUTE_NOT_FOUND
           : getPlatformErrorCode(status),
         message,
-        code: postgresError?.code,
-        constraint: postgresError?.constraint,
-        table: postgresError?.table,
-        column: postgresError?.column,
-        detail: postgresError?.detail,
+        databaseDiagnostic,
       }
     }
 
     if (postgresError) {
-      const code = postgresError.code
       const descriptor =
-        getPostgresErrorResponseDescriptor(code) ??
-        this.errorDescriptorMap[code]
+        getPostgresErrorResponseDescriptor(postgresError.sqlState) ??
+        this.errorDescriptorMap[postgresError.sqlState]
       if (descriptor) {
         return {
           status: descriptor.status,
@@ -160,11 +146,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
           businessCode: isBusinessErrorCode(descriptor.responseCode)
             ? descriptor.responseCode
             : undefined,
-          code,
-          constraint: postgresError.constraint,
-          table: postgresError.table,
-          column: postgresError.column,
-          detail: postgresError.detail,
+          databaseDiagnostic,
         }
       }
 
@@ -172,11 +154,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
         status: HttpStatus.INTERNAL_SERVER_ERROR,
         responseCode: PlatformErrorCode.INTERNAL_SERVER_ERROR,
         message: '内部服务器错误',
-        code,
-        constraint: postgresError.constraint,
-        table: postgresError.table,
-        column: postgresError.column,
-        detail: postgresError.detail,
+        databaseDiagnostic,
       }
     }
 
@@ -189,13 +167,13 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
   // 提取 Postgres 错误 支持直接抛出的数据库错误，以及 HttpException 包装的数据库错误（通过 cause 传递）。
   private extractPostgresError(exception: unknown) {
-    const directError = extractError(exception)
+    const directError = classifyPostgresError(exception)
     if (directError) {
       return directError
     }
 
     if (exception instanceof Error) {
-      return extractError(this.getErrorCause(exception))
+      return classifyPostgresError(this.getErrorCause(exception))
     }
 
     return null

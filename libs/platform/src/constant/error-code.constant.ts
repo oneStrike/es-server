@@ -38,6 +38,10 @@ export const PlatformErrorCode = {
    */
   RATE_LIMITED: 'RATE_LIMITED',
   /**
+   * 服务暂不可用
+   */
+  SERVICE_UNAVAILABLE: 'SERVICE_UNAVAILABLE',
+  /**
    * 未单独分类的 HTTP 错误
    */
   HTTP_ERROR: 'HTTP_ERROR',
@@ -125,6 +129,8 @@ export function getPlatformErrorCode(status: number): PlatformErrorCodeValue {
       return PlatformErrorCode.PAYLOAD_TOO_LARGE
     case HttpStatus.TOO_MANY_REQUESTS:
       return PlatformErrorCode.RATE_LIMITED
+    case HttpStatus.SERVICE_UNAVAILABLE:
+      return PlatformErrorCode.SERVICE_UNAVAILABLE
     default:
       return status >= HttpStatus.INTERNAL_SERVER_ERROR
         ? PlatformErrorCode.INTERNAL_SERVER_ERROR

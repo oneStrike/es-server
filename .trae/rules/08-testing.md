@@ -34,6 +34,7 @@ pnpm exec eslint <changed-typescript-files>
 pnpm build:admin
 pnpm build:app
 pnpm identity:hard-cut:check
+pnpm db:error:check
 pnpm db:migration:check
 pnpm db:comments:check
 ```
@@ -49,6 +50,11 @@ storage 继承 base、旧 schema/relation path 和 retained test/probe file。re
 test/probe 扫描必须覆盖所有 commit candidate，并排除 `.git`、`.omx`、`dist` 与
 `node_modules`。该 gate 变更需要红绿验证脚本本身确实能因旧路径或 retained
 test/probe 回归而失败。
+
+database error boundary 当前真实窄静态 gate 是 `pnpm db:error:check`，阻断旧数据库错误
+helper、业务层直接 import `DrizzleQueryError`、`@db/core/error/*` 内部路径和私有事务重试
+wrapper。该 gate 变更需要红绿验证脚本本身确实能因旧 helper、越界
+`DrizzleQueryError`、内部 error import 或私有 retry wrapper 回归而失败。
 
 ## 禁止项
 

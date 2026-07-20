@@ -2,14 +2,18 @@ import { statfs } from 'node:fs/promises'
 import * as process from 'node:process'
 import { Public } from '@libs/platform/decorators'
 import { getEnv } from '@libs/platform/utils'
-import { Controller, Get } from '@nestjs/common'
+import { Controller, Get, Logger } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { ApiTags } from '@nestjs/swagger'
 import { HealthService } from './health.service'
 
+const SAFE_ERROR_NAME_PATTERN = /^[a-z][\w.-]{0,63}$/i
+
 @ApiTags('健康检查模块')
 @Controller()
 export class HealthController {
+  private readonly logger = new Logger(HealthController.name)
+
   constructor(
     private readonly healthService: HealthService,
     private readonly configService: ConfigService,
@@ -65,11 +69,11 @@ export class HealthController {
         status,
         info: checks,
       }
-    } catch (error) {
+    } catch {
       return {
         status: 'error',
         info: {
-          error: String(error),
+          error: 'readiness check failed',
         },
       }
     }
@@ -88,12 +92,24 @@ export class HealthController {
         },
       }
     } catch (error) {
+      this.logger.warn('Disk health check failed', {
+        error: describeHealthError(error),
+      })
       return {
         [key]: {
           status: 'down',
-          error: String(error),
+          message: 'disk check unavailable',
         },
       }
     }
+  }
+}
+
+function describeHealthError(error: unknown): { errorName: string } {
+  return {
+    errorName:
+      error instanceof Error && SAFE_ERROR_NAME_PATTERN.test(error.name)
+        ? error.name
+        : 'UnknownError',
   }
 }

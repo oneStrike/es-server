@@ -7,6 +7,7 @@ import { ConfigService } from '@nestjs/config'
 import { drizzle } from 'drizzle-orm/node-postgres'
 import { Pool } from 'pg'
 import { relations } from './drizzle-relations'
+import { buildSafeDatabaseDiagnostic } from './error/error-handler'
 
 // Internal raw pg Pool token. Keep it out of @db/core's public barrel; inject it
 // only for driver-level features such as LISTEN/NOTIFY or lifecycle management.
@@ -68,7 +69,11 @@ export const DrizzlePoolProvider: Provider = {
 
     const logger = new Logger('DrizzlePool')
     pool.on('error', (error) => {
-      logger.error('Unexpected idle PostgreSQL pool client error', error.stack)
+      logger.error('Unexpected idle PostgreSQL pool client error', {
+        database: buildSafeDatabaseDiagnostic(error, {
+          source: 'postgres-pool',
+        }),
+      })
     })
 
     return pool

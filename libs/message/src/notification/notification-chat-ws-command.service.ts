@@ -8,6 +8,11 @@ import type {
   WsSendPayload,
 } from './notification-websocket.type'
 import {
+  buildSafeDatabaseDiagnostic,
+  classifyPostgresError,
+  getPostgresErrorResponseDescriptor,
+} from '@db/core'
+import {
   ApiSuccessCode,
   BusinessErrorCode,
   getPlatformErrorCode,
@@ -30,6 +35,7 @@ import { MessageChatService } from '../chat/chat.service'
 import { MessageWsMonitorService } from '../monitor/ws-monitor.service'
 
 const DIGIT_STRING_REGEX = /^\d+$/
+const SAFE_ERROR_NAME_PATTERN = /^[a-z][\w.-]{0,63}$/i
 
 /**
  * 原生 WS 聊天命令服务。
@@ -312,6 +318,14 @@ export class MessageChatWsCommandService {
     }
 
     if (error instanceof HttpException) {
+      const databaseAck = this.mapDatabaseErrorToAck(error)
+      if (databaseAck) {
+        this.logger.warn('WebSocket request failed with database error', {
+          database: buildSafeDatabaseDiagnostic(error),
+        })
+        return databaseAck
+      }
+
       const message = this.getErrorMessage(error, 'Bad request')
       return {
         code: getPlatformErrorCode(error.getStatus()),
@@ -319,10 +333,17 @@ export class MessageChatWsCommandService {
       }
     }
 
-    this.logger.error(
-      'WebSocket request failed',
-      error instanceof Error ? error.stack : String(error),
-    )
+    const databaseAck = this.mapDatabaseErrorToAck(error)
+    if (databaseAck) {
+      this.logger.warn('WebSocket request failed with database error', {
+        database: buildSafeDatabaseDiagnostic(error),
+      })
+      return databaseAck
+    }
+
+    this.logger.error('WebSocket request failed', {
+      error: this.describeError(error),
+    })
     return {
       code: PlatformErrorCode.INTERNAL_SERVER_ERROR,
       message: 'Internal server error',
@@ -360,9 +381,9 @@ export class MessageChatWsCommandService {
   // 记录 websocket 请求总数指标。
   private recordRequestMetric() {
     void this.messageWsMonitorService.recordRequest().catch((error) => {
-      this.logger.warn(
-        `Failed to record WS request metric: ${this.stringifyError(error)}`,
-      )
+      this.logger.warn('Failed to record WS request metric', {
+        database: buildSafeDatabaseDiagnostic(error),
+      })
     })
   }
 
@@ -371,24 +392,35 @@ export class MessageChatWsCommandService {
     void this.messageWsMonitorService
       .recordAck(code, latencyMs)
       .catch((error) => {
-        this.logger.warn(
-          `Failed to record WS ack metric: ${this.stringifyError(error)}`,
-        )
+        this.logger.warn('Failed to record WS ack metric', {
+          database: buildSafeDatabaseDiagnostic(error),
+        })
       })
   }
 
-  // 把未知错误对象收敛成日志可读文本。
-  private stringifyError(error: unknown): string {
-    if (error instanceof Error) {
-      return error.message
+  private mapDatabaseErrorToAck(error: unknown) {
+    const facts = classifyPostgresError(error)
+    if (!facts) {
+      return null
     }
-    if (typeof error === 'string') {
-      return error
+
+    const descriptor = getPostgresErrorResponseDescriptor(facts.sqlState)
+    if (!descriptor) {
+      return null
     }
-    try {
-      return JSON.stringify(error)
-    } catch {
-      return 'unknown'
+
+    return {
+      code: descriptor.responseCode,
+      message: descriptor.message,
+    }
+  }
+
+  private describeError(error: unknown): { errorName: string } {
+    return {
+      errorName:
+        error instanceof Error && SAFE_ERROR_NAME_PATTERN.test(error.name)
+          ? error.name
+          : 'UnknownError',
     }
   }
 }

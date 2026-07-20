@@ -1,6 +1,7 @@
 import type { ApiErrorCode } from '@libs/platform/constant'
 import { BusinessErrorCode, PlatformErrorCode } from '@libs/platform/constant'
 import { HttpStatus } from '@nestjs/common'
+import { DrizzleQueryError } from 'drizzle-orm'
 
 /**
  * PostgreSQL 错误码常量。
@@ -12,8 +13,12 @@ export const PostgresErrorCode = {
   UNIQUE_VIOLATION: '23505',
   /** 非空约束冲突 */
   NOT_NULL_VIOLATION: '23502',
+  /** 外键约束冲突 */
+  FOREIGN_KEY_VIOLATION: '23503',
   /** 检查约束冲突 */
   CHECK_VIOLATION: '23514',
+  /** 排除约束冲突 */
+  EXCLUSION_VIOLATION: '23P01',
   /** 事务序列化失败 */
   SERIALIZATION_FAILURE: '40001',
   /** 事务死锁 */
@@ -23,19 +28,37 @@ export const PostgresErrorCode = {
 export type PostgresErrorCodeValue =
   (typeof PostgresErrorCode)[keyof typeof PostgresErrorCode]
 
+export type PostgresErrorSource =
+  'drizzle-query' | 'postgres-driver' | 'postgres-pool'
+
+export type PostgresErrorCategory =
+  'integrity' | 'transaction' | 'connection' | 'programming' | 'unknown'
+
 export type PostgresExceptionKind = 'business' | 'http'
 
 export type PostgresErrorMessageKey =
-  'duplicate' | 'notNull' | 'check' | 'conflict'
+  | 'duplicate'
+  | 'notNull'
+  | 'foreignKey'
+  | 'check'
+  | 'conflict'
+  | 'serviceUnavailable'
 
-/** 规范化后的 PostgreSQL 错误元信息。 */
-export interface PostgresError {
-  code: string
+/** 安全的 PostgreSQL 错误事实；不得包含 query、params、message、detail 或 raw stack。 */
+export interface PostgresErrorFacts {
+  source: PostgresErrorSource
+  sqlState: string
+  sqlStateClass: string
+  category: PostgresErrorCategory
+  retryable: boolean
+  schema?: string
   constraint?: string
   table?: string
   column?: string
-  detail?: string
-  message: string
+}
+
+export interface PostgresErrorClassifierOptions {
+  source?: Extract<PostgresErrorSource, 'postgres-pool'>
 }
 
 export interface PostgresErrorResponseDescriptor {
@@ -48,15 +71,14 @@ export interface PostgresErrorResponseDescriptor {
 
 interface PostgresErrorCarrier {
   code?: unknown
+  schema?: unknown
   constraint?: unknown
   table?: unknown
   column?: unknown
-  detail?: unknown
-  message?: unknown
   cause?: unknown
 }
 
-const DATABASE_OPERATION_FAILED_MESSAGE = '数据库操作失败'
+const SQLSTATE_PATTERN = /^[0-9A-Z]{5}$/
 
 const POSTGRES_ERROR_DESCRIPTORS: Record<
   PostgresErrorCodeValue,
@@ -76,12 +98,26 @@ const POSTGRES_ERROR_DESCRIPTORS: Record<
     exceptionKind: 'http',
     messageKey: 'notNull',
   },
+  [PostgresErrorCode.FOREIGN_KEY_VIOLATION]: {
+    message: '关联数据不存在或仍被使用',
+    status: HttpStatus.CONFLICT,
+    responseCode: BusinessErrorCode.STATE_CONFLICT,
+    exceptionKind: 'business',
+    messageKey: 'foreignKey',
+  },
   [PostgresErrorCode.CHECK_VIOLATION]: {
     message: '数据不符合要求',
     status: HttpStatus.UNPROCESSABLE_ENTITY,
     responseCode: PlatformErrorCode.VALIDATION_FAILED,
     exceptionKind: 'http',
     messageKey: 'check',
+  },
+  [PostgresErrorCode.EXCLUSION_VIOLATION]: {
+    message: '数据状态冲突',
+    status: HttpStatus.CONFLICT,
+    responseCode: BusinessErrorCode.STATE_CONFLICT,
+    exceptionKind: 'business',
+    messageKey: 'conflict',
   },
   [PostgresErrorCode.SERIALIZATION_FAILURE]: {
     message: '操作冲突，请重试',
@@ -99,75 +135,127 @@ const POSTGRES_ERROR_DESCRIPTORS: Record<
   },
 }
 
-/**
- * 从未知异常中提取 PostgreSQL 错误信息。
- *
- * 支持 driver 错误直接抛出，以及 Drizzle/Nest 包装后通过 `cause` 保留原始错误。
- */
-export function getPostgresError(error: unknown): PostgresError | null {
-  return getPostgresErrorFromValue(error, undefined, new Set<object>())
+const CONNECTION_ERROR_DESCRIPTOR: PostgresErrorResponseDescriptor = {
+  message: '数据库服务暂不可用',
+  status: HttpStatus.SERVICE_UNAVAILABLE,
+  responseCode: PlatformErrorCode.SERVICE_UNAVAILABLE,
+  exceptionKind: 'http',
+  messageKey: 'serviceUnavailable',
+}
+
+export function classifyPostgresError(
+  error: unknown,
+  options: PostgresErrorClassifierOptions = {},
+): PostgresErrorFacts | null {
+  return classifyPostgresErrorValue(error, options.source, new Set<object>())
 }
 
 export function getPostgresErrorResponseDescriptor(
-  code: string,
+  sqlState: string,
 ): PostgresErrorResponseDescriptor | null {
-  return isKnownPostgresErrorCode(code)
-    ? POSTGRES_ERROR_DESCRIPTORS[code]
-    : null
-}
-
-function normalizeCarrier(
-  value: unknown,
-  fallbackMessage?: string,
-): PostgresError | null {
-  const carrier = asCarrier(value)
-  if (!carrier || typeof carrier.code !== 'string') {
+  if (!isSqlState(sqlState)) {
     return null
   }
 
-  return {
-    code: carrier.code,
-    constraint: getString(carrier.constraint),
-    table: getString(carrier.table),
-    column: getString(carrier.column),
-    detail: getString(carrier.detail),
-    message:
-      getString(carrier.message) ??
-      fallbackMessage ??
-      getPostgresErrorResponseDescriptor(carrier.code)?.message ??
-      DATABASE_OPERATION_FAILED_MESSAGE,
+  if (isKnownPostgresErrorCode(sqlState)) {
+    return POSTGRES_ERROR_DESCRIPTORS[sqlState]
   }
+
+  return sqlState.slice(0, 2) === '08' ? CONNECTION_ERROR_DESCRIPTOR : null
 }
 
-function getPostgresErrorFromValue(
-  value: unknown,
-  fallbackMessage: string | undefined,
-  visited: Set<object>,
-): PostgresError | null {
-  const directError = normalizeCarrier(value, fallbackMessage)
-  if (directError) {
-    return directError
-  }
-
-  const source = asCarrier(value)
-  if (!source || visited.has(source)) {
-    return null
-  }
-  visited.add(source)
-
-  return getPostgresErrorFromValue(
-    source.cause,
-    getString(source.message) ?? fallbackMessage,
-    visited,
+export function isRetryablePostgresError(
+  facts: PostgresErrorFacts,
+  options: { retryDeadlock?: boolean } = {},
+): boolean {
+  return (
+    facts.sqlState === PostgresErrorCode.SERIALIZATION_FAILURE ||
+    (options.retryDeadlock === true &&
+      facts.sqlState === PostgresErrorCode.DEADLOCK_DETECTED)
   )
 }
 
-function asCarrier(value: unknown): PostgresErrorCarrier | null {
-  return typeof value === 'object' && value !== null ? value : null
+function classifyPostgresErrorValue(
+  value: unknown,
+  source: PostgresErrorSource | undefined,
+  visited: Set<object>,
+): PostgresErrorFacts | null {
+  if (!isObject(value) || visited.has(value)) {
+    return null
+  }
+  visited.add(value)
+
+  if (value instanceof DrizzleQueryError) {
+    return classifyPostgresErrorValue(value.cause, 'drizzle-query', visited)
+  }
+
+  const carrier = value as PostgresErrorCarrier
+  const nested = classifyPostgresErrorValue(carrier.cause, source, visited)
+  if (nested) {
+    return nested
+  }
+
+  return buildFacts(carrier, source)
 }
 
-function getString(value: unknown): string | undefined {
-  return typeof value === 'string' ? value : undefined
+function buildFacts(
+  carrier: PostgresErrorCarrier,
+  requestedSource: PostgresErrorSource | undefined,
+): PostgresErrorFacts | null {
+  if (typeof carrier.code !== 'string' || !isSqlState(carrier.code)) {
+    return null
+  }
+
+  const sqlState = carrier.code
+  const sqlStateClass = sqlState.slice(0, 2)
+  const source = requestedSource ?? 'postgres-driver'
+
+  return {
+    source,
+    sqlState,
+    sqlStateClass,
+    category: getPostgresErrorCategory(sqlState),
+    retryable: isRetryableSqlState(sqlState),
+    schema: getString(carrier.schema),
+    constraint: getString(carrier.constraint),
+    table: getString(carrier.table),
+    column: getString(carrier.column),
+  }
+}
+
+function getPostgresErrorCategory(sqlState: string): PostgresErrorCategory {
+  const sqlStateClass = sqlState.slice(0, 2)
+  if (sqlStateClass === '08') {
+    return 'connection'
+  }
+  if (sqlStateClass === '23') {
+    return 'integrity'
+  }
+  if (
+    sqlState === PostgresErrorCode.SERIALIZATION_FAILURE ||
+    sqlState === PostgresErrorCode.DEADLOCK_DETECTED
+  ) {
+    return 'transaction'
+  }
+  if (
+    sqlStateClass === '42' ||
+    sqlStateClass === '28' ||
+    sqlStateClass === '3F'
+  ) {
+    return 'programming'
+  }
+  return 'unknown'
+}
+
+function isRetryableSqlState(sqlState: string): boolean {
+  return (
+    sqlState === PostgresErrorCode.SERIALIZATION_FAILURE ||
+    sqlState === PostgresErrorCode.DEADLOCK_DETECTED
+  )
+}
+
+function isSqlState(code: string): boolean {
+  return SQLSTATE_PATTERN.test(code)
 }
 
 function isKnownPostgresErrorCode(
@@ -176,4 +264,12 @@ function isKnownPostgresErrorCode(
   return Object.values(PostgresErrorCode).includes(
     code as PostgresErrorCodeValue,
   )
+}
+
+function isObject(value: unknown): value is object {
+  return typeof value === 'object' && value !== null
+}
+
+function getString(value: unknown): string | undefined {
+  return typeof value === 'string' ? value : undefined
 }

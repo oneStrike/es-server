@@ -1,6 +1,11 @@
 import type { FavoriteCreateResult } from './favorite.type'
 import type { IFavoriteTargetResolver } from './interfaces/favorite-target-resolver.type'
-import { acquireIntegrityLocks, DrizzleService, toPageResult } from '@db/core'
+import {
+  acquireIntegrityLocks,
+  buildSafeDatabaseDiagnostic,
+  DrizzleService,
+  toPageResult,
+} from '@db/core'
 import { UserLevelRuleService } from '@libs/growth/level-rule/level-rule.service'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
@@ -55,9 +60,13 @@ export class FavoriteService {
     return [...new Set(targetIds)]
   }
 
-  // 从异常中提取稳定错误码，缺失时返回 'unknown'。
+  // 从异常中提取安全 SQLSTATE，缺失时返回 'unknown'。
   private resolveErrorCode(error: unknown) {
-    return this.drizzle.extractError(error)?.code ?? 'unknown'
+    return this.drizzle.classifyError(error)?.sqlState ?? 'unknown'
+  }
+
+  private buildDetailResolveDiagnostic(error: unknown) {
+    return JSON.stringify(buildSafeDatabaseDiagnostic(error))
   }
 
   // 解析收藏目标类型对应的等级业务标识，用于成长奖励路由。
@@ -297,9 +306,7 @@ export class FavoriteService {
           }
         } catch (error) {
           this.logger.warn(
-            `favorite_detail_resolve_failed targetType=${type} batchSize=${uniqueIds.length} elapsedMs=${Date.now() - startedAt} errorCode=${this.resolveErrorCode(error)} error=${
-              error instanceof Error ? error.message : String(error)
-            }`,
+            `favorite_detail_resolve_failed targetType=${type} batchSize=${uniqueIds.length} elapsedMs=${Date.now() - startedAt} errorCode=${this.resolveErrorCode(error)} diagnostic=${this.buildDetailResolveDiagnostic(error)}`,
           )
         }
       }),

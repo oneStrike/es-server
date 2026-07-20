@@ -3,7 +3,11 @@ import type {
   FollowTargetTypeEnum as FollowTargetType,
 } from './follow.type'
 import type { IFollowTargetResolver } from './interfaces/follow-target-resolver.type'
-import { DrizzleService, toPageResult } from '@db/core'
+import {
+  buildSafeDatabaseDiagnostic,
+  DrizzleService,
+  toPageResult,
+} from '@db/core'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { AppUserCountService } from '@libs/user/app-user-count.service'
@@ -59,9 +63,13 @@ export class FollowService {
     return [...new Set(targetIds)]
   }
 
-  // 从异常中提取稳定错误码，缺失时返回 'unknown'。
+  // 从异常中提取安全 SQLSTATE，缺失时返回 'unknown'。
   private resolveErrorCode(error: unknown) {
-    return this.drizzle.extractError(error)?.code ?? 'unknown'
+    return this.drizzle.classifyError(error)?.sqlState ?? 'unknown'
+  }
+
+  private buildDetailResolveDiagnostic(error: unknown) {
+    return JSON.stringify(buildSafeDatabaseDiagnostic(error))
   }
 
   // 注册关注目标解析器，供其他模块在应用启动时注册自己的解析器。
@@ -344,9 +352,7 @@ export class FollowService {
       }
     } catch (error) {
       this.logger.warn(
-        `follow_detail_resolve_failed targetType=${targetType} batchSize=${targetIds.length} elapsedMs=${Date.now() - startedAt} errorCode=${this.resolveErrorCode(error)} error=${
-          error instanceof Error ? error.message : String(error)
-        }`,
+        `follow_detail_resolve_failed targetType=${targetType} batchSize=${targetIds.length} elapsedMs=${Date.now() - startedAt} errorCode=${this.resolveErrorCode(error)} diagnostic=${this.buildDetailResolveDiagnostic(error)}`,
       )
       return {
         page,

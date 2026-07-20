@@ -1,12 +1,13 @@
 import type { Cache } from 'cache-manager'
 import type { CacheManagerLike, CacheStoreLike } from './health.type'
-import { DrizzleService } from '@db/core'
+import { buildSafeDatabaseDiagnostic, DrizzleService } from '@db/core'
 import { isDevelopment, isProduction } from '@libs/platform/utils'
 import { CACHE_MANAGER } from '@nestjs/cache-manager'
-import { Inject, Injectable } from '@nestjs/common'
+import { Inject, Injectable, Logger } from '@nestjs/common'
 import { sql } from 'drizzle-orm'
 
 const PONG_VALUE = 'pong'
+const SAFE_ERROR_NAME_PATTERN = /^[a-z][\w.-]{0,63}$/i
 
 function isMemoryStore(store: CacheStoreLike | undefined) {
   return (
@@ -25,6 +26,8 @@ function makePingKey(label: string) {
  */
 @Injectable()
 export class HealthService {
+  private readonly logger = new Logger(HealthService.name)
+
   constructor(
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
     private readonly drizzle: DrizzleService,
@@ -40,10 +43,13 @@ export class HealthService {
         },
       }
     } catch (error) {
+      this.logger.warn('Database health check failed', {
+        database: buildSafeDatabaseDiagnostic(error),
+      })
       return {
         [key]: {
           status: 'down',
-          error: String(error),
+          message: 'database unavailable',
         },
       }
     }
@@ -90,10 +96,13 @@ export class HealthService {
         },
       }
     } catch (error) {
+      this.logger.warn('Memory cache health check failed', {
+        error: describeHealthError(error),
+      })
       return {
         [key]: {
           status: 'down',
-          error: String(error),
+          message: 'memory cache unavailable',
         },
       }
     }
@@ -140,10 +149,13 @@ export class HealthService {
         },
       }
     } catch (error) {
+      this.logger.warn('Redis cache health check failed', {
+        error: describeHealthError(error),
+      })
       return {
         [key]: {
           status: 'down',
-          error: String(error),
+          message: 'redis cache unavailable',
         },
       }
     }
@@ -163,5 +175,14 @@ export class HealthService {
 
     // 默认情况下（如其他环境）检查内存缓存
     return this.checkMemory(key)
+  }
+}
+
+function describeHealthError(error: unknown): { errorName: string } {
+  return {
+    errorName:
+      error instanceof Error && SAFE_ERROR_NAME_PATTERN.test(error.name)
+        ? error.name
+        : 'UnknownError',
   }
 }

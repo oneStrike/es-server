@@ -5,6 +5,18 @@ import { ConfigService } from '@nestjs/config'
 import { ClsService } from 'nestjs-cls'
 import { createLogger, format, transports } from 'winston'
 
+const REDACTED = '[REDACTED]'
+const DATABASE_ERROR_REDACTED = '[DATABASE_ERROR]'
+const DATABASE_URI_REDACTED = '[DATABASE_URI]'
+const MAX_REDACTION_DEPTH = 6
+const SAFE_ERROR_NAME_PATTERN = /^[a-z][\w.-]{0,63}$/i
+const SENSITIVE_KEY_PATTERN =
+  /password|passwd|secret|token|credential|connection|databaseUrl|dsn|query|params|parameter|detail|authorization|cookie|api[-_]?key|private[-_]?key/i
+const POSTGRES_URI_PATTERN = /\bpostgres(?:ql)?:\/\/[^\s"'<>]+/gi
+const CREDENTIAL_AUTHORITY_PATTERN = /\/\/[^/\s:@]+:[^@\s/]+@/g
+const SENSITIVE_ASSIGNMENT_PATTERN =
+  /(?:password|passwd|token|secret|credential|connectionString|databaseUrl|query|params|parameter|detail)[:=][^\s&,;]+/gi
+
 /**
  * LoggerService - 简化的日志服务
  *
@@ -45,13 +57,24 @@ export class LoggerService {
       format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
       format.errors({ stack: true }),
       format.printf(
-        ({ timestamp, level, message, context, stack, requestId }) => {
+        ({ timestamp, level, message, context, stack, requestId, ...rest }) => {
           const ctx = context ? `[${context}] ` : ''
           const reqId = requestId ? `[${requestId}] ` : ''
+          const sanitizedMessage = sanitizeLogValue(message)
           const msg =
-            typeof message === 'string' ? message : JSON.stringify(message)
-          const s = stack ? `\n${stack}` : ''
-          return `${timestamp} ${level} ${reqId}${ctx}${msg}${s}`
+            typeof sanitizedMessage === 'string'
+              ? sanitizedMessage
+              : JSON.stringify(sanitizedMessage)
+          const sanitizedStack = sanitizeStack(stack)
+          const sanitizedRest = sanitizeLogValue(rest)
+          const meta =
+            isPlainRecord(sanitizedRest) && Object.keys(sanitizedRest).length
+              ? ` ${JSON.stringify(sanitizedRest)}`
+              : ''
+          const s = sanitizedStack.length
+            ? `\n${sanitizedStack.join('\n')}`
+            : ''
+          return `${timestamp} ${level} ${reqId}${ctx}${msg}${meta}${s}`
         },
       ),
     )
@@ -71,14 +94,15 @@ export class LoggerService {
           stack,
           ...rest
         } = info
+        const sanitizedRest = sanitizeLogRecord(rest)
         return {
           timestamp,
           level,
-          message,
+          message: sanitizeLogValue(message),
           requestId,
           context,
-          stack,
-          ...rest,
+          stack: sanitizeStack(stack),
+          ...sanitizedRest,
         }
       })(),
       format.json(),
@@ -116,4 +140,118 @@ export class LoggerService {
   getLoggerWithContext(context: string) {
     return this.logger.child({ context })
   }
+}
+
+function sanitizeLogValue(value: unknown, depth = 0): unknown {
+  if (depth > MAX_REDACTION_DEPTH) {
+    return '[MaxDepth]'
+  }
+
+  if (typeof value === 'string') {
+    return sanitizeString(value)
+  }
+
+  if (
+    value === null ||
+    typeof value === 'number' ||
+    typeof value === 'boolean' ||
+    typeof value === 'undefined'
+  ) {
+    return value
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((item) => sanitizeLogValue(item, depth + 1))
+  }
+
+  if (value instanceof Error) {
+    return {
+      name: getSafeErrorName(value),
+      stack: sanitizeStack(value.stack),
+    }
+  }
+
+  if (!isPlainRecord(value)) {
+    return Object.prototype.toString.call(value)
+  }
+
+  const sanitized: Record<string, unknown> = {}
+  for (const [key, nested] of Object.entries(value)) {
+    sanitized[key] = SENSITIVE_KEY_PATTERN.test(key)
+      ? REDACTED
+      : sanitizeLogValue(nested, depth + 1)
+  }
+  return sanitized
+}
+
+function sanitizeLogRecord(
+  value: Record<string, unknown>,
+): Record<string, unknown> {
+  const sanitized = sanitizeLogValue(value)
+  return isPlainRecord(sanitized) ? sanitized : {}
+}
+
+function sanitizeStack(stack: unknown): string[] {
+  if (Array.isArray(stack)) {
+    return stack
+      .filter((frame): frame is string => typeof frame === 'string')
+      .map((frame) => frame.trim())
+      .filter(isSafeStackFrame)
+      .slice(0, 8)
+  }
+
+  if (typeof stack !== 'string') {
+    return []
+  }
+
+  return stack
+    .split('\n')
+    .map((frame) => frame.trim())
+    .filter(isSafeStackFrame)
+    .slice(0, 8)
+}
+
+function isSafeStackFrame(frame: string): boolean {
+  return frame.startsWith('at ') && !SENSITIVE_KEY_PATTERN.test(frame)
+}
+
+function sanitizeString(value: string): string {
+  if (isDrizzleQueryMessage(value) || hasSensitiveDiagnosticLine(value)) {
+    return DATABASE_ERROR_REDACTED
+  }
+
+  return value
+    .replace(POSTGRES_URI_PATTERN, DATABASE_URI_REDACTED)
+    .replace(CREDENTIAL_AUTHORITY_PATTERN, `//${REDACTED}@`)
+    .replace(SENSITIVE_ASSIGNMENT_PATTERN, REDACTED)
+}
+
+function isDrizzleQueryMessage(value: string): boolean {
+  const normalized = value.toLowerCase()
+  return normalized.includes('failed query:') && normalized.includes('params:')
+}
+
+function hasSensitiveDiagnosticLine(value: string): boolean {
+  return value
+    .split('\n')
+    .some((line) =>
+      ['query:', 'params:', 'detail:'].some((prefix) =>
+        line.trimStart().toLowerCase().startsWith(prefix),
+      ),
+    )
+}
+
+function getSafeErrorName(error: Error): string {
+  return error.name && SAFE_ERROR_NAME_PATTERN.test(error.name)
+    ? error.name
+    : 'UnknownError'
+}
+
+function isPlainRecord(value: unknown): value is Record<string, unknown> {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    (Object.getPrototypeOf(value) === Object.prototype ||
+      Object.getPrototypeOf(value) === null)
+  )
 }

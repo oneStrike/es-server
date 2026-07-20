@@ -2,6 +2,7 @@ import type { SQL, SQLWrapper } from 'drizzle-orm'
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres'
 import type { PgTable, TableConfig } from 'drizzle-orm/pg-core'
 import type { relations } from './drizzle-relations'
+import type { PostgresErrorFacts } from './error/postgres-error'
 
 /** 稳定领域类型 `Db`。仅供内部领域/服务链路复用，避免重复定义。 */
 export type Db = NodePgDatabase<typeof relations>
@@ -36,9 +37,20 @@ export type { SQL, SQLWrapper, TableConfig }
 export interface DrizzleErrorMessages {
   duplicate?: string
   notNull?: string
+  foreignKey?: string
   check?: string
   conflict?: string
+  serviceUnavailable?: string
   notFound?: string
+}
+
+export interface DrizzleTransactionRetryOptions {
+  safeToRetry: true
+  maxAttempts: number
+  retryDeadlock?: boolean
+  baseDelayMs?: number
+  maxDelayMs?: number
+  jitterRatio?: number
 }
 
 /**
@@ -51,7 +63,14 @@ export interface DrizzleTransactionOptions<T> {
   execute: (tx: DbTransaction) => Promise<T>
   config?: DbTransactionConfig
   messages?: DrizzleErrorMessages
+  retry?: DrizzleTransactionRetryOptions
 }
 
 /** 稳定领域类型 `DrizzleMutationResult`。仅供内部领域/服务链路复用，避免重复定义。 */
 export type DrizzleMutationResult = { rowCount?: number | null } | unknown[]
+
+export interface DatabaseErrorDiagnostic {
+  errorName: string
+  facts: PostgresErrorFacts | null
+  stackFrames: string[]
+}

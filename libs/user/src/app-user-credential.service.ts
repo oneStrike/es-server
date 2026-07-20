@@ -160,26 +160,28 @@ export class AppUserCredentialService {
     initialize: AppUserRegistrationInitializer,
   ): Promise<AppUserRegistrationResult> {
     try {
-      const user = await this.db.transaction(async (tx) => {
-        const account = await allocateAppUserAccountInTx(tx)
-        const [newUser] = await tx
-          .insert(this.appUser)
-          .values({
-            account,
-            nickname: `用户${account}`,
-            password,
-            phoneNumber: phone,
-            genderType: GenderEnum.UNKNOWN,
-            isEnabled: true,
-            levelId: null,
-          })
-          .returning(this.loginUserSelect)
+      const user = await this.drizzle.withTransaction({
+        execute: async (tx) => {
+          const account = await allocateAppUserAccountInTx(tx)
+          const [newUser] = await tx
+            .insert(this.appUser)
+            .values({
+              account,
+              nickname: `用户${account}`,
+              password,
+              phoneNumber: phone,
+              genderType: GenderEnum.UNKNOWN,
+              isEnabled: true,
+              levelId: null,
+            })
+            .returning(this.loginUserSelect)
 
-        const initializationOutcome = await initialize(tx, newUser.id)
-        if (initializationOutcome === 'snapshot-drift') {
-          throw new AppUserRegistrationInitializationSnapshotDriftError()
-        }
-        return newUser
+          const initializationOutcome = await initialize(tx, newUser.id)
+          if (initializationOutcome === 'snapshot-drift') {
+            throw new AppUserRegistrationInitializationSnapshotDriftError()
+          }
+          return newUser
+        },
       })
       return { outcome: 'registered', user }
     } catch (error) {
@@ -188,7 +190,7 @@ export class AppUserCredentialService {
       ) {
         return { outcome: 'initialization-snapshot-drift' }
       }
-      return this.drizzle.handleError(error)
+      throw error
     }
   }
 }

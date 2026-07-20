@@ -7,6 +7,7 @@ export type {
 export { DrizzleModule } from './drizzle.module'
 export { DrizzleService } from './drizzle.service'
 export type {
+  DatabaseErrorDiagnostic,
   Db,
   DbExecutor,
   DbTransaction,
@@ -14,13 +15,27 @@ export type {
   DrizzleErrorMessages,
   DrizzleMutationResult,
   DrizzleTransactionOptions,
+  DrizzleTransactionRetryOptions,
   PgTable,
   SeedDb,
   SQL,
   TableConfig,
 } from './drizzle.type'
-export { extractError } from './error/error-handler'
-export { getPostgresErrorResponseDescriptor } from './error/postgres-error'
+export { buildSafeDatabaseDiagnostic } from './error/error-handler'
+export {
+  classifyPostgresError,
+  getPostgresErrorResponseDescriptor,
+  isRetryablePostgresError,
+  PostgresErrorCode,
+} from './error/postgres-error'
+export type {
+  PostgresErrorCategory,
+  PostgresErrorCodeValue,
+  PostgresErrorFacts,
+  PostgresErrorMessageKey,
+  PostgresErrorResponseDescriptor,
+  PostgresErrorSource,
+} from './error/postgres-error'
 export {
   acquireIntegrityLocks,
   ADMIN_RBAC_RELATION_INTEGRITY_LOCKS,

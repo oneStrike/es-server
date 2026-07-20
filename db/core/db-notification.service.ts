@@ -12,10 +12,12 @@ import {
 } from '@nestjs/common'
 import { Client as PgClient } from 'pg'
 import { DRIZZLE_POOL, DRIZZLE_RUNTIME_CONFIG } from './drizzle.provider'
+import { buildSafeDatabaseDiagnostic } from './error/error-handler'
 
 const POSTGRES_NOTIFICATION_CHANNEL_REGEX = /^[A-Z_]\w{0,62}$/i
 const RECONNECT_BASE_DELAY_MS = 250
 const RECONNECT_MAX_DELAY_MS = 10_000
+const SAFE_ERROR_NAME_PATTERN = /^[a-z][\w.-]{0,63}$/i
 
 interface NotificationCallback {
   onNotification: (notification: Notification) => void
@@ -272,7 +274,9 @@ export class DbNotificationService implements OnApplicationShutdown {
     }
 
     this.errorCount += 1
-    this.logger.warn(`Database notification listener failed: ${error.message}`)
+    this.logger.warn('Database notification listener failed', {
+      database: buildSafeDatabaseDiagnostic(error),
+    })
     this.notifySubscriberErrors(error)
     this.scheduleReconnect()
   }
@@ -319,9 +323,9 @@ export class DbNotificationService implements OnApplicationShutdown {
     try {
       await client.end()
     } catch (error) {
-      this.logger.warn(
-        `Failed to close database notification listener: ${toError(error).message}`,
-      )
+      this.logger.warn('Failed to close database notification listener', {
+        database: buildSafeDatabaseDiagnostic(error),
+      })
     }
   }
 
@@ -351,7 +355,7 @@ export class DbNotificationService implements OnApplicationShutdown {
         this.errorCount += 1
         const callbackError = toError(error)
         this.logger.error(
-          `Database notification callback failed for channel "${channel}": ${callbackError.message}`,
+          `Database notification callback failed for channel "${channel}": ${getSafeErrorName(callbackError)}`,
         )
         this.invokeCallbackError(callback, callbackError)
       }
@@ -367,7 +371,7 @@ export class DbNotificationService implements OnApplicationShutdown {
     } catch (callbackError) {
       this.errorCount += 1
       this.logger.error(
-        `Database notification error callback failed: ${toError(callbackError).message}`,
+        `Database notification error callback failed: ${getSafeErrorName(callbackError)}`,
       )
     }
   }
@@ -402,6 +406,13 @@ function toError(error: unknown): Error {
   }
 
   return new Error('Database notification listener failed')
+}
+
+function getSafeErrorName(error: unknown): string {
+  if (error instanceof Error && SAFE_ERROR_NAME_PATTERN.test(error.name)) {
+    return error.name
+  }
+  return 'UnknownError'
 }
 
 function normalizeNotificationChannel(channel: string): string {

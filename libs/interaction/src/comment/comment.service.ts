@@ -10,7 +10,6 @@ import type {
   CommentWriteContext,
   ReplyTargetSnapshot,
   TargetCommentsQueryInput,
-  TransactionRetryOptions,
   VisibleCommentEffectPayload,
 } from './comment.type'
 
@@ -164,40 +163,6 @@ export class CommentService {
       })
 
     return Number(counter.nextFloor) - 1
-  }
-
-  /**
-   * 事务冲突重试包装器
-   *
-   * PostgreSQL 在 Serializable 隔离级别下可能因并发冲突抛出序列化失败错误，
-   * 此方法自动捕获该错误并重试，适用于楼层号分配等需要严格顺序保证的场景。
-   *
-   * @param operation - 需要在事务中执行的操作
-   * @param options - 重试选项，maxRetries 默认 3 次
-   * @returns 操作执行结果
-   */
-  private async withTransactionConflictRetry<T>(
-    operation: () => Promise<T>,
-    options?: TransactionRetryOptions,
-  ): Promise<T> {
-    const maxRetries = Math.max(1, options?.maxRetries ?? 3)
-    let lastError = new Error('事务冲突重试次数已耗尽')
-
-    for (let attempt = 0; attempt < maxRetries; attempt += 1) {
-      try {
-        return await operation()
-      } catch (error) {
-        lastError = error instanceof Error ? error : new Error(String(error))
-        if (
-          !this.drizzle.isSerializationFailure(error) ||
-          attempt >= maxRetries - 1
-        ) {
-          throw error
-        }
-      }
-    }
-
-    throw lastError
   }
 
   // 注册目标解析器
@@ -1014,157 +979,151 @@ export class CommentService {
 
     const resolver = this.getResolver(targetType)
 
-    const created = await this.drizzle.withErrorHandling(
-      async () =>
-        this.withTransactionConflictRetry(
-          async () => {
-            const rateLimitPlan =
-              this.commentPermissionService.buildCommentRateLimitLockPlan(
-                userId,
-                targetType,
-              )
-            return this.db.transaction(async (tx) => {
-              await acquireIntegrityLocks(tx, [...rateLimitPlan.lockRequests])
-              await this.ensureTargetAfterRelatedCommentLocksInTx(tx, {
-                targetId,
-                actorUserId: userId,
-                resolver,
-              })
-              await this.commentPermissionService.ensureCommentRateLimitAfterLockInTx(
-                tx,
-                rateLimitPlan,
-              )
-              const compiledBody = await this.materializeCommentBodyInTx(
-                tx,
-                html,
-                userId,
-                resolver,
-              )
-              const decision = this.resolveAuditDecision(compiledBody.plainText)
-              const { recordHits, statisticsHits, ...persistedDecision } =
-                decision
+    const rateLimitPlan =
+      this.commentPermissionService.buildCommentRateLimitLockPlan(
+        userId,
+        targetType,
+      )
+    const created = await this.drizzle.withTransaction({
+      execute: async (tx) => {
+        await acquireIntegrityLocks(tx, [...rateLimitPlan.lockRequests])
+        await this.ensureTargetAfterRelatedCommentLocksInTx(tx, {
+          targetId,
+          actorUserId: userId,
+          resolver,
+        })
+        await this.commentPermissionService.ensureCommentRateLimitAfterLockInTx(
+          tx,
+          rateLimitPlan,
+        )
+        const compiledBody = await this.materializeCommentBodyInTx(
+          tx,
+          html,
+          userId,
+          resolver,
+        )
+        const decision = this.resolveAuditDecision(compiledBody.plainText)
+        const { recordHits, statisticsHits, ...persistedDecision } = decision
 
-              const floor = await this.allocateRootCommentFloorInTx(
-                tx,
-                targetType,
-                targetId,
-              )
+        const floor = await this.allocateRootCommentFloorInTx(
+          tx,
+          targetType,
+          targetId,
+        )
 
-              const [newComment] = await tx
-                .insert(this.userComment)
-                .values({
-                  targetType,
-                  targetId,
-                  userId,
-                  html: compiledBody.html,
-                  content: compiledBody.plainText,
-                  body: compiledBody.body,
-                  bodyVersion: BODY_VERSION_V1,
-                  floor,
-                  ...persistedDecision,
-                  geoCountry: context.geoCountry,
-                  geoProvince: context.geoProvince,
-                  geoCity: context.geoCity,
-                  geoIsp: context.geoIsp,
-                  geoSource: context.geoSource,
-                })
-                .returning({
-                  id: this.userComment.id,
-                  userId: this.userComment.userId,
-                  targetType: this.userComment.targetType,
-                  targetId: this.userComment.targetId,
-                  replyToId: this.userComment.replyToId,
-                  html: this.userComment.html,
-                  content: this.userComment.content,
-                  createdAt: this.userComment.createdAt,
-                })
+        const [newComment] = await tx
+          .insert(this.userComment)
+          .values({
+            targetType,
+            targetId,
+            userId,
+            html: compiledBody.html,
+            content: compiledBody.plainText,
+            body: compiledBody.body,
+            bodyVersion: BODY_VERSION_V1,
+            floor,
+            ...persistedDecision,
+            geoCountry: context.geoCountry,
+            geoProvince: context.geoProvince,
+            geoCity: context.geoCity,
+            geoIsp: context.geoIsp,
+            geoSource: context.geoSource,
+          })
+          .returning({
+            id: this.userComment.id,
+            userId: this.userComment.userId,
+            targetType: this.userComment.targetType,
+            targetId: this.userComment.targetId,
+            replyToId: this.userComment.replyToId,
+            html: this.userComment.html,
+            content: this.userComment.content,
+            createdAt: this.userComment.createdAt,
+          })
 
-              if (recordHits && statisticsHits.length) {
-                await this.sensitiveWordStatisticsService.recordEntityHitsInTx(
-                  tx,
-                  {
-                    entityType: 'comment',
-                    entityId: newComment.id,
-                    operationType: 'create',
-                    hits: statisticsHits,
-                    occurredAt: newComment.createdAt,
-                  },
-                )
-              }
+        if (recordHits && statisticsHits.length) {
+          await this.sensitiveWordStatisticsService.recordEntityHitsInTx(tx, {
+            entityType: 'comment',
+            entityId: newComment.id,
+            operationType: 'create',
+            hits: statisticsHits,
+            occurredAt: newComment.createdAt,
+          })
+        }
 
-              await this.mentionService.replaceMentionsInTx({
-                tx,
-                sourceType: MentionSourceTypeEnum.COMMENT,
-                sourceId: newComment.id,
-                content: compiledBody.plainText,
-                mentions: compiledBody.mentionFacts,
-              })
-              await this.emojiCatalogService.recordRecentUsageInTx(tx, {
-                userId,
-                scene: EmojiSceneEnum.COMMENT,
-                items: compiledBody.emojiRecentUsageItems,
-              })
-              if (resolver.postPersistedCommentHook) {
-                const meta = await resolver.resolveMeta(tx, targetId)
-                await resolver.postPersistedCommentHook(
-                  tx,
-                  {
-                    ...newComment,
-                    body: compiledBody.body,
-                    auditStatus: decision.auditStatus,
-                    isHidden: decision.isHidden,
-                    isVisible: this.isVisible({ ...decision, deletedAt: null }),
-                  },
-                  meta,
-                )
-              }
+        await this.mentionService.replaceMentionsInTx({
+          tx,
+          sourceType: MentionSourceTypeEnum.COMMENT,
+          sourceId: newComment.id,
+          content: compiledBody.plainText,
+          mentions: compiledBody.mentionFacts,
+        })
+        await this.emojiCatalogService.recordRecentUsageInTx(tx, {
+          userId,
+          scene: EmojiSceneEnum.COMMENT,
+          items: compiledBody.emojiRecentUsageItems,
+        })
+        if (resolver.postPersistedCommentHook) {
+          const meta = await resolver.resolveMeta(tx, targetId)
+          await resolver.postPersistedCommentHook(
+            tx,
+            {
+              ...newComment,
+              body: compiledBody.body,
+              auditStatus: decision.auditStatus,
+              isHidden: decision.isHidden,
+              isVisible: this.isVisible({ ...decision, deletedAt: null }),
+            },
+            meta,
+          )
+        }
 
-              await this.appUserCountService.updateCommentCount(tx, userId, 1)
+        await this.appUserCountService.updateCommentCount(tx, userId, 1)
 
-              const commentCreatedEvent = this.buildCommentCreatedEventEnvelope(
-                {
-                  commentId: newComment.id,
-                  userId: newComment.userId,
-                  targetType: newComment.targetType,
-                  targetId: newComment.targetId,
-                  replyToId: newComment.replyToId,
-                  occurredAt: newComment.createdAt,
-                  auditStatus: decision.auditStatus,
-                  isHidden: decision.isHidden,
-                },
-              )
+        const commentCreatedEvent = this.buildCommentCreatedEventEnvelope({
+          commentId: newComment.id,
+          userId: newComment.userId,
+          targetType: newComment.targetType,
+          targetId: newComment.targetId,
+          replyToId: newComment.replyToId,
+          occurredAt: newComment.createdAt,
+          auditStatus: decision.auditStatus,
+          isHidden: decision.isHidden,
+        })
 
-              if (this.isVisible({ ...decision, deletedAt: null })) {
-                await this.applyCommentCountDelta(tx, targetType, targetId, 1)
+        if (this.isVisible({ ...decision, deletedAt: null })) {
+          await this.applyCommentCountDelta(tx, targetType, targetId, 1)
 
-                const meta = await resolver.resolveMeta(tx, targetId)
-                if (resolver.postCommentHook) {
-                  await resolver.postCommentHook(tx, newComment, meta)
-                }
+          const meta = await resolver.resolveMeta(tx, targetId)
+          if (resolver.postCommentHook) {
+            await resolver.postCommentHook(tx, newComment, meta)
+          }
 
-                await this.compensateVisibleCommentEffects(
-                  tx,
-                  newComment,
-                  meta,
-                  commentCreatedEvent,
-                )
-              }
+          await this.compensateVisibleCommentEffects(
+            tx,
+            newComment,
+            meta,
+            commentCreatedEvent,
+          )
+        }
 
-              return {
-                comment: newComment,
-                visible: this.isVisible({ ...decision, deletedAt: null }),
-                eventEnvelope: commentCreatedEvent,
-              }
-            })
-          },
-          {
-            maxRetries: 3,
-          },
-        ),
-      {
+        return {
+          comment: newComment,
+          visible: this.isVisible({ ...decision, deletedAt: null }),
+          eventEnvelope: commentCreatedEvent,
+        }
+      },
+      config: { isolationLevel: 'serializable' },
+      retry: {
+        safeToRetry: true,
+        maxAttempts: 3,
+        baseDelayMs: 20,
+        maxDelayMs: 500,
+        jitterRatio: 0.2,
+      },
+      messages: {
         conflict: '请求冲突，请稍后重试',
       },
-    )
+    })
     if (
       canConsumeEventEnvelopeByConsumer(
         created.eventEnvelope,

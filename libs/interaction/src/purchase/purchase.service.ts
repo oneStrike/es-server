@@ -3,7 +3,12 @@ import type { LevelPurchasePricing } from '@libs/growth/level-rule/level-rule.ty
 import type { DiscountCouponReservationResult } from '../coupon/types/coupon.type'
 import type { PurchaseContentPort } from './types/purchase-content-port.type'
 import type { PreparedPurchaseAttempt } from './types/purchase.type'
-import { acquireIntegrityLocks, DrizzleService } from '@db/core'
+import {
+  acquireIntegrityLocks,
+  buildSafeDatabaseDiagnostic,
+  DrizzleService,
+  PostgresErrorCode,
+} from '@db/core'
 import { UserLevelRuleService } from '@libs/growth/level-rule/level-rule.service'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
@@ -53,7 +58,11 @@ export class PurchaseService {
 
   // 判断底层异常是否为购买唯一约束冲突。
   private isUniqueConstraintError(error: unknown) {
-    return this.drizzle.isUniqueViolation(error)
+    const facts = this.drizzle.classifyError(error)
+    return (
+      facts?.sqlState === PostgresErrorCode.UNIQUE_VIOLATION &&
+      facts.constraint === 'user_purchase_record_success_unique_idx'
+    )
   }
 
   // 委托内容域校验章节可购买性并读取订单冻结原价。
@@ -118,8 +127,9 @@ export class PurchaseService {
       }
 
       this.logger.error(
-        `purchase_failed_unknown userId=${input.userId} targetType=${input.targetType} targetId=${input.targetId}`,
-        error instanceof Error ? error.stack : undefined,
+        `purchase_failed_unknown userId=${input.userId} targetType=${input.targetType} targetId=${input.targetId} diagnostic=${JSON.stringify(
+          buildSafeDatabaseDiagnostic(error),
+        )}`,
       )
       throw error
     }

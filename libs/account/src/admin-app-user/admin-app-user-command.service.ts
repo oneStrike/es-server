@@ -4,6 +4,7 @@ import {
   acquireIntegrityLocks,
   DrizzleService,
   exclusiveIntegrityLock,
+  PostgresErrorCode,
   tableIntegrityLock,
 } from '@db/core'
 import { AppUserGrowthProfileService } from '@libs/growth/app-user-growth-profile/app-user-growth-profile.service'
@@ -30,6 +31,11 @@ import {
 } from './dto/admin-app-user.dto'
 
 class AdminAppUserDefaultLevelSnapshotDriftError extends Error {}
+
+const APP_USER_UNIQUE_CONSTRAINTS = new Set([
+  'app_user_phone_number_key',
+  'app_user_email_address_key',
+])
 
 /**
  * APP 用户账号命令服务。
@@ -109,7 +115,7 @@ export class AdminAppUserCommandService extends AdminAppUserServiceSupport {
             { cause: error },
           )
         }
-        if (this.drizzle.isUniqueViolation(error)) {
+        if (this.isAppUserPhoneOrEmailUniqueViolation(error)) {
           throw new BusinessException(
             BusinessErrorCode.RESOURCE_ALREADY_EXISTS,
             '手机号或邮箱已存在',
@@ -174,7 +180,7 @@ export class AdminAppUserCommandService extends AdminAppUserServiceSupport {
         )
       }
     } catch (error) {
-      if (this.drizzle.isUniqueViolation(error)) {
+      if (this.isAppUserPhoneOrEmailUniqueViolation(error)) {
         throw new BusinessException(
           BusinessErrorCode.RESOURCE_ALREADY_EXISTS,
           '手机号或邮箱已存在',
@@ -397,6 +403,15 @@ export class AdminAppUserCommandService extends AdminAppUserServiceSupport {
         notFoundMessage,
       )
     }
+  }
+
+  private isAppUserPhoneOrEmailUniqueViolation(error: unknown) {
+    const facts = this.drizzle.classifyError(error)
+    return (
+      facts?.sqlState === PostgresErrorCode.UNIQUE_VIOLATION &&
+      facts.constraint !== undefined &&
+      APP_USER_UNIQUE_CONSTRAINTS.has(facts.constraint)
+    )
   }
 
   // 重建单个 APP 用户关注相关计数。

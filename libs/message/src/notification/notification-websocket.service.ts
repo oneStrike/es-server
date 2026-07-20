@@ -14,7 +14,7 @@ import type {
 } from './notification-websocket.type'
 import { Buffer } from 'node:buffer'
 import { randomUUID } from 'node:crypto'
-import { DbNotificationService } from '@db/core'
+import { buildSafeDatabaseDiagnostic, DbNotificationService } from '@db/core'
 import { PlatformErrorCode } from '@libs/platform/constant'
 import { AuthErrorMessages } from '@libs/platform/modules/auth/helpers'
 import { UserService } from '@libs/user/user.service'
@@ -26,6 +26,7 @@ import { MessageWsMonitorService } from '../monitor/ws-monitor.service'
 const NATIVE_WS_OPEN = 1
 const MESSAGE_WS_FANOUT_CHANNEL = 'message_ws_fanout'
 const POSTGRES_NOTIFY_PAYLOAD_LIMIT_BYTES = 7_600
+const SAFE_ERROR_NAME_PATTERN = /^[a-z][\w.-]{0,63}$/i
 
 @Injectable()
 export class MessageWebSocketService implements OnApplicationShutdown {
@@ -41,9 +42,9 @@ export class MessageWebSocketService implements OnApplicationShutdown {
   private crossInstanceSubscriptionPromise?: Promise<void>
   private isShuttingDown = false
   private readonly handleCrossInstanceListenerError = (error: Error) => {
-    this.logger.warn(
-      `Message WS fanout listener disconnected: ${this.stringifyError(error)}`,
-    )
+    this.logger.warn('Message WS fanout listener disconnected', {
+      database: buildSafeDatabaseDiagnostic(error),
+    })
   }
 
   private readonly handleCrossInstanceFanout = (message: Notification) => {
@@ -287,7 +288,7 @@ export class MessageWebSocketService implements OnApplicationShutdown {
         client.send(message)
       } catch (error) {
         this.logger.warn(
-          `Failed to push native WS event: ${this.stringifyError(error)}`,
+          `Failed to push native WS event: ${this.describeError(error).errorName}`,
         )
         this.unregisterNativeClient(client)
       }
@@ -330,9 +331,9 @@ export class MessageWebSocketService implements OnApplicationShutdown {
         await this.stopCrossInstanceListenerIfIdle()
       }
     } catch (error) {
-      this.logger.warn(
-        `Failed to start message WS fanout listener: ${this.stringifyError(error)}`,
-      )
+      this.logger.warn('Failed to start message WS fanout listener', {
+        database: buildSafeDatabaseDiagnostic(error),
+      })
     } finally {
       this.crossInstanceSubscriptionPromise = undefined
     }
@@ -381,9 +382,9 @@ export class MessageWebSocketService implements OnApplicationShutdown {
         serialized,
       )
     } catch (error) {
-      this.logger.warn(
-        `Failed to publish message WS fanout: ${this.stringifyError(error)}`,
-      )
+      this.logger.warn('Failed to publish message WS fanout', {
+        database: buildSafeDatabaseDiagnostic(error),
+      })
       this.recordFanoutPublishFailedMetric()
     }
   }
@@ -405,7 +406,9 @@ export class MessageWebSocketService implements OnApplicationShutdown {
       return envelope as MessageWsFanoutEnvelope
     } catch (error) {
       this.logger.warn(
-        `Failed to parse message WS fanout payload: ${this.stringifyError(error)}`,
+        `Failed to parse message WS fanout payload: ${
+          this.describeError(error).errorName
+        }`,
       )
       return null
     }
@@ -469,18 +472,18 @@ export class MessageWebSocketService implements OnApplicationShutdown {
   // 记录 websocket 重连指标。
   private recordReconnectMetric() {
     void this.messageWsMonitorService.recordReconnect().catch((error) => {
-      this.logger.warn(
-        `Failed to record WS reconnect metric: ${this.stringifyError(error)}`,
-      )
+      this.logger.warn('Failed to record WS reconnect metric', {
+        database: buildSafeDatabaseDiagnostic(error),
+      })
     })
   }
 
   // 记录跨实例 fanout 因 PostgreSQL notify 载荷限制被跳过。
   private recordFanoutSkippedMetric() {
     void this.messageWsMonitorService.recordFanoutSkipped().catch((error) => {
-      this.logger.warn(
-        `Failed to record WS fanout skipped metric: ${this.stringifyError(error)}`,
-      )
+      this.logger.warn('Failed to record WS fanout skipped metric', {
+        database: buildSafeDatabaseDiagnostic(error),
+      })
     })
   }
 
@@ -489,24 +492,18 @@ export class MessageWebSocketService implements OnApplicationShutdown {
     void this.messageWsMonitorService
       .recordFanoutPublishFailed()
       .catch((error) => {
-        this.logger.warn(
-          `Failed to record WS fanout publish metric: ${this.stringifyError(error)}`,
-        )
+        this.logger.warn('Failed to record WS fanout publish metric', {
+          database: buildSafeDatabaseDiagnostic(error),
+        })
       })
   }
 
-  // 把未知错误对象收敛成日志可读文本。
-  private stringifyError(error: unknown): string {
-    if (error instanceof Error) {
-      return error.message
-    }
-    if (typeof error === 'string') {
-      return error
-    }
-    try {
-      return JSON.stringify(error)
-    } catch {
-      return 'unknown'
+  private describeError(error: unknown): { errorName: string } {
+    return {
+      errorName:
+        error instanceof Error && SAFE_ERROR_NAME_PATTERN.test(error.name)
+          ? error.name
+          : 'UnknownError',
     }
   }
 }

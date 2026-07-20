@@ -18,8 +18,10 @@ import type {
 } from './chat.type'
 import {
   acquireIntegrityLocks,
+  buildSafeDatabaseDiagnostic,
   DrizzleService,
   exclusiveIntegrityLock,
+  PostgresErrorCode,
   tableIntegrityLock,
   toPageResult,
 } from '@db/core'
@@ -76,6 +78,10 @@ import {
 
 /** 数字字符串正则表达式（模块作用域，避免重复编译） */
 const DIGIT_STRING_REGEX = /^\d+$/
+const CHAT_MESSAGE_SEQ_UNIQUE_CONSTRAINT =
+  'chat_message_conversation_id_message_seq_key'
+const CHAT_CLIENT_MESSAGE_UNIQUE_CONSTRAINT =
+  'chat_message_conversation_id_sender_id_client_message_id_key'
 
 type ChatMessageOutputSource = Pick<
   typeof chatMessage.$inferSelect,
@@ -953,23 +959,34 @@ export class MessageChatService {
           }
         })
       } catch (error) {
-        lastError = error instanceof Error ? error : new Error(String(error))
+        lastError =
+          error instanceof Error ? error : new Error('chat message failed')
 
-        if (!this.drizzle.isUniqueViolation(error)) {
+        const facts = this.drizzle.classifyError(error)
+        if (facts?.sqlState !== PostgresErrorCode.UNIQUE_VIOLATION) {
           throw error
         }
 
-        if (clientMessageId) {
-          const existedMessage = await this.findMessageByClientMessageId(
-            conversationId,
-            userId,
-            clientMessageId,
-          )
-          if (existedMessage) {
-            return {
-              message: existedMessage,
-              isNew: false,
-            }
+        if (facts.constraint === CHAT_MESSAGE_SEQ_UNIQUE_CONSTRAINT) {
+          continue
+        }
+
+        if (
+          facts.constraint !== CHAT_CLIENT_MESSAGE_UNIQUE_CONSTRAINT ||
+          !clientMessageId
+        ) {
+          throw error
+        }
+
+        const existedMessage = await this.findMessageByClientMessageId(
+          conversationId,
+          userId,
+          clientMessageId,
+        )
+        if (existedMessage) {
+          return {
+            message: existedMessage,
+            isNew: false,
           }
         }
       }
@@ -1586,7 +1603,7 @@ export class MessageChatService {
   private recordResyncTriggeredMetric() {
     void this.messageWsMonitorService.recordResyncTriggered().catch((error) => {
       this.logger.warn(
-        `Failed to record WS resync trigger metric: ${this.stringifyError(error)}`,
+        `Failed to record WS resync trigger metric: ${this.stringifyDatabaseDiagnostic(error)}`,
       )
     })
   }
@@ -1595,9 +1612,13 @@ export class MessageChatService {
   private recordResyncSuccessMetric() {
     void this.messageWsMonitorService.recordResyncSuccess().catch((error) => {
       this.logger.warn(
-        `Failed to record WS resync success metric: ${this.stringifyError(error)}`,
+        `Failed to record WS resync success metric: ${this.stringifyDatabaseDiagnostic(error)}`,
       )
     })
+  }
+
+  private stringifyDatabaseDiagnostic(error: unknown) {
+    return JSON.stringify(buildSafeDatabaseDiagnostic(error))
   }
 
   private stringifyError<T>(error: T) {

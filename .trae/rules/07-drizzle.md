@@ -7,7 +7,7 @@
 - 何时看：改 Drizzle 查询、schema、migration、seed、bootstrap、分页 / 排序 / 原子更新时先看本篇。
 - 必做：统一通过 `DrizzleService` 使用数据库能力；schema、DTO、常量/枚举、migration、RQB v2、relations 与 comments 同轮收敛；常规 migration append-only。
 - 不要：使用 `drizzle-kit push`，不要把 seed 当 bootstrap，不要省略显式排序、新增数据库外键，或改写已有 migration。
-- 最低验证：`pnpm type-check`、目标 DB integration，以及附录中的 migration/comments 检查入口。
+- 最低验证：`pnpm type-check`、`pnpm db:error:check`、目标 DB integration，以及附录中的 migration/comments 检查入口。
 
 本篇只定义 Drizzle 规则本身；命令入口与操作顺序统一收敛到 [07-drizzle-operations.md](./07-drizzle-operations.md)。
 
@@ -18,7 +18,8 @@
 - 版本精确固定为 `drizzle-orm@1.0.0-rc.4` 与 `drizzle-kit@1.0.0-rc.3`；不得以范围版本、未验证 Kit RC4 能力或旧 RQB API 代替当前 contract。
 - canonical relations 唯一 owner 是 `db/core/drizzle-relations.ts`：`baseRelations` 必须最先展开，随后每个 domain relation part 恰好一次。所有 schema table 与 `db.query` key 必须一一对应。
 - Node PostgreSQL client 使用 `drizzle({ client: pool, relations, jit: true })`。不得传入旧 `schema:` option、构造模块局部 relation 聚合或为 seed/script 另建不一致的 relations contract。
-- `drizzle.db`、`drizzle.schema`、`buildPage(...)`、`buildOrderBy(...)`、`withTransaction(...)`、`withErrorHandling(...)` 等基础能力都属于这一入口。
+- `drizzle.db`、`drizzle.schema`、`buildPage(...)`、`buildOrderBy(...)`、`classifyError(...)`、`withTransaction(...)`、`withErrorHandling(...)` 等基础能力都属于这一入口。
+- `DrizzleQueryError` 只在 `db/core` 内部解包；业务层、transport 层和脚本不得直接 import 或判断 Drizzle 内部错误类。
 - 闭集状态 / 类型 / 模式 / 角色字段默认使用 `smallint` / `smallint[]`，并同步补 `check(...)` 约束。
 - 开放业务键继续保持字符串；不要为了“统一 smallint”而强行数字化。
 - 常见例外包括 `eventKey`、`categoryKey`、`projectionKey`、`domain`、`packageMimeType`、模板键、路由键。
@@ -30,6 +31,9 @@
 
 - 查询表和关系表时，默认从 `this.drizzle.schema` 取用；查询语句在业务 owner 中显式使用 Drizzle query builder 表达。
 - 事务默认通过 `db.transaction(async (tx) => ...)` 或 `drizzle.withTransaction({ execute: async (tx) => ... })` 启动，并沿调用链显式透传 `tx`。
+- 需要数据库错误分支时，业务层使用 `drizzle.classifyError(error)` 读取安全 `PostgresErrorFacts`；只允许基于 `sqlState`、`constraint`、`table`、`column` 等 facts 做分支，不读取 SQL、参数、message、detail 或 stack。
+- 需要自动重试时，只能使用 `drizzle.withTransaction({ execute, retry: { safeToRetry: true, maxAttempts, ... } })`；重试必须覆盖整个事务 callback，且 callback 内不得包含不可重复外部副作用。
+- 事务重试默认只覆盖 `40001` serialization failure；`40P01` deadlock 必须显式设置 `retryDeadlock: true` 后才能加入重试。
 - 常规分页默认在业务 service 中显式写出 `select`、`where`、`orderBy`、`limit`、`offset` 和 `$count`。
 - 分页返回统一用 `toPageResult(...)` 组装。
 - 分页统一采用 1-based `pageIndex`。
@@ -106,6 +110,9 @@
 - 禁止将 `DrizzleModule` 标记为 `@Global()`，也不得通过 `PlatformModule` 或其他 facade 重新隐式提供数据库能力。
 - 禁止重新引入 RQB v1 callback/filter shape、`schema:` 初始化、局部 relations 聚合、旧 Drizzle extension/shim，或为迁移期保留任何 ORM API fallback。
 - 禁止隐式事务；事务上下文必须显式透传。
+- 禁止新增业务私有事务重试 wrapper；需要重试时使用 `DrizzleService.withTransaction` 的 `retry` 契约。
+- 禁止在未声明 `safeToRetry: true` 的情况下重试事务；禁止在可重试事务 callback 中执行不可重复外部副作用。
+- 禁止在 `apps/*` 或 `libs/*` 直接 import `DrizzleQueryError`、`@db/core/error/*` 或复制 `db/core` 内部错误 carrier。
 - 禁止分页不写排序字段。
 - 禁止新增或继续使用 `drizzle.ext`、`@db/extensions`、通用 table/field 字符串 helper、shim 或 deprecated ext 入口。
 - 禁止在 Drizzle 查询参数中用嵌套三元表达式构造 `where`、`orderBy` 或字段投影；多分支条件必须改成命名变量、`if / else if`、`SQL[]` 条件数组或已有扩展能力。
@@ -125,12 +132,15 @@
 
 - 允许：分页查询显式写 `where`、`orderBy`、`limit`、`offset` 和 `$count`，最后用 `toPageResult(...)` 组装返回。
 - 允许：`await this.drizzle.withTransaction({ execute: async (tx) => { ... } })`
+- 允许：`await this.drizzle.withTransaction({ execute, retry: { safeToRetry: true, maxAttempts: 3 } })`
+- 允许：`const facts = this.drizzle.classifyError(error); if (facts?.sqlState === PostgresErrorCode.UNIQUE_VIOLATION) { ... }`
 - 允许：`viewCount: sql\`${this.table.viewCount} + 1\``
 - 允许：闭集状态字段使用 `smallint().default(1).notNull()` 并补 `check(...)`
 - 允许：`db.select().from(table)` — 查询全表字段时使用简写
 - 允许：`const { html, content, body, ...rest } = getColumns(table); db.select({ ...rest }).from(table)` — 排除少量字段时用 getColumns 解构
 - 允许：`return { ...topic, liked: map.get(topic.id) ?? false }` — 同名字段 spread 透传 + 仅写出变换字段
 - 禁止：在 service 内自行创建新的数据库连接或 Drizzle 实例。
+- 禁止：`if (error instanceof DrizzleQueryError) { ... }`
 - 禁止：`db.execute('UPDATE ... ' + userInput)`
 - 禁止：`where: flag ? { ...base, a } : other ? { ...base, b } : { ...base }`
 - 禁止：schema 已改为数字枚举，但 DTO / 常量仍保留旧字符串值域。

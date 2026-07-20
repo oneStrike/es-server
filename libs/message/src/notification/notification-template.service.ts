@@ -14,7 +14,7 @@ import type {
   RenderNotificationTemplateInput,
 } from './notification-template.type'
 import type { MessageNotificationCategoryKey } from './notification.type'
-import { DrizzleService, toPageResult } from '@db/core'
+import { DrizzleService, PostgresErrorCode, toPageResult } from '@db/core'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { buildDateOnlyRangeInAppTimeZone } from '@libs/platform/utils'
@@ -502,7 +502,11 @@ export class MessageNotificationTemplateService {
   }
 
   private throwIfTemplateCategoryAlreadyExists(error: unknown): void {
-    if (!this.drizzle.isUniqueViolation(error)) {
+    const facts = this.drizzle.classifyError(error)
+    if (
+      facts?.sqlState !== PostgresErrorCode.UNIQUE_VIOLATION ||
+      facts.constraint !== 'notification_template_category_key_key'
+    ) {
       return
     }
 

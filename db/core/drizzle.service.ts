@@ -5,8 +5,9 @@ import type {
   DrizzleErrorMessages,
   DrizzleMutationResult,
   DrizzleTransactionOptions,
+  DrizzleTransactionRetryOptions,
 } from './drizzle.type'
-import type { PostgresError } from './error/postgres-error'
+import type { PostgresErrorFacts } from './error/postgres-error'
 import type {
   AllowlistedOrderByOptions,
   DrizzleOrderByInput,
@@ -24,19 +25,14 @@ import * as schema from '@db/schema'
 import { resolveDbQueryConfig } from '@libs/platform/config'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
-import { Inject, Injectable } from '@nestjs/common'
+import { Inject, Injectable, Logger } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { DRIZZLE_DB } from './drizzle.provider'
+import { executeWithErrorHandling } from './error/error-handler'
 import {
-  executeWithErrorHandling,
-  extractError,
-  handleError,
-  isCheckViolation,
-  isErrorCode,
-  isNotNullViolation,
-  isSerializationFailure,
-  isUniqueViolation,
-} from './error/error-handler'
+  classifyPostgresError,
+  isRetryablePostgresError,
+} from './error/postgres-error'
 import { buildAllowlistedOrderBy, buildDrizzleOrderBy } from './query/order-by'
 import { buildDrizzlePageParams } from './query/page-params'
 import { buildDrizzlePageQuery } from './query/page-query'
@@ -46,6 +42,8 @@ import { buildDrizzlePageQuery } from './query/page-query'
  */
 @Injectable()
 export class DrizzleService {
+  private readonly logger = new Logger(DrizzleService.name)
+
   private readonly queryConfig: DbQueryConfig
 
   constructor(
@@ -112,52 +110,10 @@ export class DrizzleService {
   }
 
   /**
-   * 暴露错误码判断，供需要保留 PostgreSQL 原始错误语义的业务路径复用。
+   * 将未知异常归类为安全 PostgreSQL 事实；业务层只能基于 facts 做显式分支。
    */
-  isErrorCode(error: unknown, code: string): boolean {
-    return isErrorCode(error, code)
-  }
-
-  /**
-   * 判断错误是否来自唯一约束冲突，避免业务层直接解析数据库驱动错误。
-   */
-  isUniqueViolation(error: unknown): boolean {
-    return isUniqueViolation(error)
-  }
-
-  /**
-   * 判断错误是否来自非空约束冲突。
-   */
-  isNotNullViolation(error: unknown): boolean {
-    return isNotNullViolation(error)
-  }
-
-  /**
-   * 判断错误是否来自 check constraint 失败。
-   */
-  isCheckViolation(error: unknown): boolean {
-    return isCheckViolation(error)
-  }
-
-  /**
-   * 判断错误是否为可重试的序列化失败。
-   */
-  isSerializationFailure(error: unknown): boolean {
-    return isSerializationFailure(error)
-  }
-
-  /**
-   * 从未知异常中提取 PostgreSQL 错误元信息，供上层做业务分支或日志输出。
-   */
-  extractError(error: unknown): PostgresError | null {
-    return extractError(error)
-  }
-
-  /**
-   * 统一将底层数据库异常翻译为业务可消费的 Nest 异常。
-   */
-  handleError(error: unknown, messages?: DrizzleErrorMessages): never {
-    return handleError(error, messages)
+  classifyError(error: unknown): PostgresErrorFacts | null {
+    return classifyPostgresError(error)
   }
 
   /**
@@ -197,7 +153,7 @@ export class DrizzleService {
     fn: () => Promise<T>,
     messages?: DrizzleErrorMessages,
   ): Promise<T> {
-    const result = await this.executeWithErrorHandling(fn, messages)
+    const result = await executeWithErrorHandling(fn, messages)
     if (messages?.notFound) {
       this.assertAffectedRows(
         result as DrizzleMutationResult,
@@ -214,21 +170,62 @@ export class DrizzleService {
     execute,
     config,
     messages,
+    retry,
   }: DrizzleTransactionOptions<T>): Promise<T> {
-    return this.executeWithErrorHandling(
-      async () => this.db.transaction(execute, config),
-      messages,
-    )
-  }
+    if (!retry) {
+      return executeWithErrorHandling(
+        async () => this.db.transaction(execute, config),
+        messages,
+      )
+    }
 
-  /**
-   * 收敛底层异常处理实现，避免公共方法各自复制相同的包装逻辑。
-   */
-  private async executeWithErrorHandling<T>(
-    fn: () => Promise<T>,
-    messages?: DrizzleErrorMessages,
-  ): Promise<T> {
-    return executeWithErrorHandling(fn, messages)
+    this.assertRetryOptions(retry)
+    const maxAttempts = Math.max(1, Math.floor(retry.maxAttempts))
+    const baseDelayMs = retry.baseDelayMs ?? 20
+    const maxDelayMs = retry.maxDelayMs ?? 500
+    const jitterRatio = retry.jitterRatio ?? 0.2
+    let lastRetryFacts: PostgresErrorFacts | null = null
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+      try {
+        const result = await executeWithErrorHandling(
+          async () => this.db.transaction(execute, config),
+          messages,
+        )
+        if (lastRetryFacts) {
+          this.logTransactionRetryMetric(lastRetryFacts, attempt, 'success')
+        }
+        return result
+      } catch (error) {
+        const facts = classifyPostgresError(error)
+        const canRetry =
+          facts !== null &&
+          isRetryablePostgresError(facts, {
+            retryDeadlock: retry.retryDeadlock === true,
+          })
+        const shouldRetry = attempt < maxAttempts && canRetry
+
+        if (!shouldRetry) {
+          if (facts) {
+            this.logTransactionRetryMetric(
+              facts,
+              attempt,
+              canRetry ? 'exhausted' : 'non-retryable',
+            )
+          }
+          throw error
+        }
+
+        lastRetryFacts = facts
+        this.logTransactionRetryMetric(facts, attempt, 'retrying')
+
+        await this.delay(
+          this.getRetryDelayMs(attempt, baseDelayMs, maxDelayMs, jitterRatio),
+        )
+      }
+    }
+
+    throw new Error('unreachable transaction retry state')
   }
 
   /**
@@ -237,6 +234,48 @@ export class DrizzleService {
   private resolveQueryConfig() {
     return resolveDbQueryConfig(
       this.configService.get<Partial<DbQueryConfig>>('db.query'),
+    )
+  }
+
+  private assertRetryOptions(retry: DrizzleTransactionRetryOptions) {
+    if (retry.safeToRetry !== true) {
+      throw new Error('transaction retry requires safeToRetry: true')
+    }
+    if (!Number.isInteger(retry.maxAttempts) || retry.maxAttempts < 1) {
+      throw new Error('transaction retry requires maxAttempts >= 1')
+    }
+  }
+
+  private getRetryDelayMs(
+    attempt: number,
+    baseDelayMs: number,
+    maxDelayMs: number,
+    jitterRatio: number,
+  ) {
+    const capped = Math.min(maxDelayMs, baseDelayMs * 2 ** (attempt - 1))
+    const boundedJitterRatio = Math.max(0, Math.min(1, jitterRatio))
+    const jitter = capped * boundedJitterRatio * Math.random()
+    return Math.round(capped + jitter)
+  }
+
+  private async delay(ms: number) {
+    return new Promise((resolve) => setTimeout(resolve, ms))
+  }
+
+  private logTransactionRetryMetric(
+    facts: PostgresErrorFacts,
+    retryAttempt: number,
+    retryOutcome: 'exhausted' | 'non-retryable' | 'retrying' | 'success',
+  ) {
+    this.logger.warn(
+      JSON.stringify({
+        event: 'database_transaction_retry',
+        category: facts.category,
+        sqlState: facts.sqlState,
+        retryAttempt,
+        retryOutcome,
+        source: facts.source,
+      }),
     )
   }
 }

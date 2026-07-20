@@ -12,11 +12,6 @@ export type CommentUserBrief = Pick<
   'id' | 'nickname' | 'avatarUrl' | 'isEnabled' | 'status'
 >
 
-/** 稳定领域类型 `TransactionRetryOptions`。仅供内部领域/服务链路复用，避免重复定义。 */
-export interface TransactionRetryOptions {
-  maxRetries?: number
-}
-
 /**
  * 评论可见性判断输入。
  * - 与审核状态、隐藏标记、删除时间保持一致

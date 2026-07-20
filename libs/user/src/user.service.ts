@@ -8,7 +8,12 @@ import type {
   UserCenterSource,
   UserStatusSource,
 } from './user.type'
-import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
+import {
+  buildILikeCondition,
+  DrizzleService,
+  PostgresErrorCode,
+  toPageResult,
+} from '@db/core'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import {
@@ -237,7 +242,11 @@ export class UserService {
       )
       return true
     } catch (error) {
-      if (this.drizzle.isUniqueViolation(error)) {
+      const facts = this.drizzle.classifyError(error)
+      if (
+        facts?.sqlState === PostgresErrorCode.UNIQUE_VIOLATION &&
+        facts.constraint === 'app_user_email_address_key'
+      ) {
         throw new BusinessException(
           BusinessErrorCode.RESOURCE_ALREADY_EXISTS,
           '邮箱已被使用',
@@ -261,7 +270,11 @@ export class UserService {
       )
       return true
     } catch (error) {
-      if (this.drizzle.isUniqueViolation(error)) {
+      const facts = this.drizzle.classifyError(error)
+      if (
+        facts?.sqlState === PostgresErrorCode.UNIQUE_VIOLATION &&
+        facts.constraint === 'app_user_phone_number_key'
+      ) {
         throw new BusinessException(
           BusinessErrorCode.RESOURCE_ALREADY_EXISTS,
           '手机号已注册',

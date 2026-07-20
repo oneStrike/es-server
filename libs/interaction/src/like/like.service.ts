@@ -3,7 +3,12 @@ import type {
   LikeTargetMeta,
 } from './interfaces/like-target-resolver.type'
 import type { LikePageUserQuery } from './like.type'
-import { acquireIntegrityLocks, DrizzleService, toPageResult } from '@db/core'
+import {
+  acquireIntegrityLocks,
+  buildSafeDatabaseDiagnostic,
+  DrizzleService,
+  toPageResult,
+} from '@db/core'
 import { UserLevelRuleService } from '@libs/growth/level-rule/level-rule.service'
 import { BusinessErrorCode, SceneTypeEnum } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
@@ -66,9 +71,13 @@ export class LikeService {
     return [...new Set(targetIds)]
   }
 
-  // 从异常中提取稳定错误码，缺失时返回 'unknown'。
+  // 从异常中提取安全 SQLSTATE，缺失时返回 'unknown'。
   private resolveErrorCode(error: unknown) {
-    return this.drizzle.extractError(error)?.code ?? 'unknown'
+    return this.drizzle.classifyError(error)?.sqlState ?? 'unknown'
+  }
+
+  private buildDetailResolveDiagnostic(error: unknown) {
+    return JSON.stringify(buildSafeDatabaseDiagnostic(error))
   }
 
   // 将解析器返回的原始对象安全映射为点赞目标详情 DTO。
@@ -404,9 +413,7 @@ export class LikeService {
       detailMap = await resolver.batchGetDetails(targetIds)
     } catch (error) {
       this.logger.warn(
-        `like_detail_resolve_failed targetType=${query.targetType} batchSize=${targetIds.length} elapsedMs=${Date.now() - startedAt} errorCode=${this.resolveErrorCode(error)} error=${
-          error instanceof Error ? error.message : String(error)
-        }`,
+        `like_detail_resolve_failed targetType=${query.targetType} batchSize=${targetIds.length} elapsedMs=${Date.now() - startedAt} errorCode=${this.resolveErrorCode(error)} diagnostic=${this.buildDetailResolveDiagnostic(error)}`,
       )
       return {
         ...page,
