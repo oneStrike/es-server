@@ -33,9 +33,8 @@ export interface IntegrityLockRequest {
 }
 
 /**
- * Advisory locks only require an executable transaction handle. Keeping this
- * structural avoids coupling maintenance scripts (which intentionally use a
- * schema-light Drizzle client) to the application relation generic.
+ * advisory lock 只需要可执行事务句柄。保持结构化以避免维护脚本（故意使用 schema-light Drizzle client）
+ * 与应用 relation 泛型耦合。
  */
 export interface IntegrityLockExecutor {
   execute: (query: SQLWrapper) => unknown
@@ -46,12 +45,18 @@ export interface IntegrityLockObserver {
   query: (statement: string, values: unknown[]) => Promise<unknown>
 }
 
+/**
+ * 为共享模式构造完整性锁请求。
+ */
 export function sharedIntegrityLock(
   resource: IntegrityLock,
 ): IntegrityLockRequest {
   return { mode: 'shared', resource }
 }
 
+/**
+ * 为独占模式构造完整性锁请求。
+ */
 export function exclusiveIntegrityLock(
   resource: IntegrityLock,
 ): IntegrityLockRequest {
@@ -155,6 +160,9 @@ export async function isIntegrityLockHeldByAnotherTransaction(
   return !acquired
 }
 
+/**
+ * 构造唯一的完整性锁；校验 namespace 和 ownerParts 非空，并生成规范化的 canonicalOwnerKey。
+ */
 export function integrityLock(
   namespace: IntegrityLockNamespaceValue,
   ...ownerParts: IntegrityLockOwnerPart[]
@@ -172,6 +180,7 @@ export function integrityLock(
   }
 }
 
+// 将 ownerPart 规范化为类型前缀字符串，确保不同类型值不会碰撞。
 function canonicalizeOwnerPart(value: IntegrityLockOwnerPart): string {
   if (value === null) {
     return 'null'
@@ -191,6 +200,7 @@ function canonicalizeOwnerPart(value: IntegrityLockOwnerPart): string {
   return `string:${value}`
 }
 
+// 归并同一资源的最强模式，再按 (namespace, canonicalOwnerKey) 排序后输出有序锁请求列表。
 function normalizeIntegrityLockRequests(
   requests: readonly IntegrityLockRequest[],
 ): IntegrityLockRequest[] {
@@ -213,6 +223,7 @@ function normalizeIntegrityLockRequests(
   )
 }
 
+// 运行时校验锁请求的结构完整性。
 function assertIntegrityLockRequest(
   request: IntegrityLockRequest,
 ): asserts request is IntegrityLockRequest {
@@ -237,13 +248,14 @@ function assertIntegrityLockRequest(
   }
 }
 
+// 构造用于 hashtextextended 的输入文本；使用 JSON 元组保证无歧义且不含 NUL 字节。
 function buildIntegrityLockHashInput(lock: IntegrityLock): string {
-  // PostgreSQL text values cannot contain NUL bytes. A canonical JSON tuple is
-  // both unambiguous for all owner strings and valid for every text binding
-  // path used by Drizzle and node-postgres.
+  // PostgreSQL text 值不能包含 NUL 字节；JSON 元组对所有 owner 字符串无歧义，
+  // 且在 Drizzle 和 node-postgres 的所有 text binding 路径中合法。
   return JSON.stringify([lock.namespace, lock.canonicalOwnerKey])
 }
 
+// 从 observer 查询结果中安全读取 acquired 标志。
 function readIntegrityLockProbeAcquired(result: unknown): boolean {
   if (!isRecord(result) || !isUnknownArray(result.rows)) {
     throw new TypeError('Integrity lock observer returned no query rows')
@@ -259,10 +271,12 @@ function readIntegrityLockProbeAcquired(result: unknown): boolean {
   return row.acquired
 }
 
+// 类型守卫：判断值是否为非 null 对象。
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null
 }
 
+// 类型守卫：判断值是否为数组。
 function isUnknownArray(value: unknown): value is unknown[] {
   return Array.isArray(value)
 }

@@ -15,6 +15,9 @@ interface DemoSeedEnvironment extends DatabaseConnection {
   nodeEnv: string
 }
 
+/**
+ * 校验当前环境是否安全可执行 demo seed，返回解析后的数据库连接信息。
+ */
 export function assertSafeDemoSeedEnvironment(
   env: NodeJS.ProcessEnv,
 ): DemoSeedEnvironment {
@@ -44,6 +47,9 @@ export function assertSafeDemoSeedEnvironment(
   }
 }
 
+/**
+ * 从环境变量读取 DATABASE_URL 并解析为结构化数据库连接信息。
+ */
 export function readDatabaseConnection(
   env: NodeJS.ProcessEnv,
   missingUrlMessage: string,
@@ -53,6 +59,7 @@ export function readDatabaseConnection(
   )
 }
 
+// 读取必填环境变量，缺失或空值时抛出异常。
 function requireEnv(env: NodeJS.ProcessEnv, key: string, message: string) {
   const value = normalizeEnvValue(env[key])
 
@@ -63,16 +70,19 @@ function requireEnv(env: NodeJS.ProcessEnv, key: string, message: string) {
   return value
 }
 
+// 去除首尾空格，空字符串返回 undefined。
 function normalizeEnvValue(value: string | undefined) {
   const normalized = value?.trim()
   return normalized || undefined
 }
 
+// 判断环境变量值是否为 truthy（1/true/yes/y）。
 function isTruthyEnv(value: string | undefined) {
   const normalized = normalizeEnvValue(value)?.toLowerCase()
   return Boolean(normalized && TRUE_ENV_VALUES.has(normalized))
 }
 
+// 将逗号分隔的环境变量值合并默认值后去重为小写列表。
 function readListEnv(value: string | undefined, defaults: string[]) {
   const items = [...defaults, ...(value ?? '').split(',')]
 
@@ -81,6 +91,7 @@ function readListEnv(value: string | undefined, defaults: string[]) {
   )
 }
 
+// 将 DATABASE_URL 解析为结构化连接信息，校验协议与数据库名。
 function parseDatabaseConnection(databaseUrl: string): DatabaseConnection {
   let url: URL
 
@@ -106,12 +117,14 @@ function parseDatabaseConnection(databaseUrl: string): DatabaseConnection {
   }
 }
 
+// 格式化不含密码的安全数据库标签，用于日志和终端输出。
 function formatSafeDatabaseLabel(url: URL, databaseName: string) {
   const port = url.port ? `:${url.port}` : ''
 
   return `${url.protocol}//${url.hostname}${port}/${databaseName}`
 }
 
+// 在主机名、数据库名、用户名中搜索是否命中生产危险关键字。
 function findMatchedDenyToken(
   database: DatabaseConnection,
   denyTokens: string[],

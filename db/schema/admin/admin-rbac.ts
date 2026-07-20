@@ -57,7 +57,7 @@ export const adminRole = snakeCase.table(
      */
     isEnabled: boolean().default(true).notNull(),
     /**
-     * 排序值
+     * 排序值（0=默认排序，数值越小越靠前）
      */
     sortOrder: integer().default(0).notNull(),
     /**
@@ -190,7 +190,7 @@ export const adminMenu = snakeCase.table(
      */
     icon: varchar({ length: 80 }),
     /**
-     * 排序值
+     * 排序值（0=默认排序，数值越小越靠前）
      */
     sortOrder: integer().default(0).notNull(),
     /**

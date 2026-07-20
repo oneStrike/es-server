@@ -73,12 +73,18 @@ export interface BuildSchemaCommentsOptions {
   outputPath?: string
 }
 
+/**
+ * 返回 schema comments 生成产物的输出路径。
+ */
 export function getSchemaCommentsOutputPath(
   outputPath: string = DEFAULT_OUTPUT_PATH,
 ): string {
   return outputPath
 }
 
+/**
+ * 扫描 db/schema 源码中的 JSDoc 注释，生成结构化 COMMENT ON 语句列表与 warnings。
+ */
 export function buildSchemaCommentsArtifact(
   options: BuildSchemaCommentsOptions = {},
 ): SchemaCommentsArtifact {
@@ -213,6 +219,9 @@ export function buildSchemaCommentsArtifact(
   }
 }
 
+/**
+ * 将生成产物写入 generated.sql，仅在内容变化时返回 changed=true。
+ */
 export function writeSchemaCommentsFile(
   artifact: SchemaCommentsArtifact,
 ): WriteSchemaCommentsResult {
@@ -226,6 +235,7 @@ export function writeSchemaCommentsFile(
   }
 }
 
+// 解析 db/schema 目录下所有 .ts 源文件，提取表级和字段级 JSDoc 注释。
 function parseSchemaSourceComments() {
   const result = new Map<string, SourceTableComments>()
 
@@ -300,6 +310,7 @@ function parseSchemaSourceComments() {
   return result
 }
 
+// 递归列出 schema 目录下所有 .ts 源文件，按路径排序。
 function listSchemaSourceFiles(directoryPath: string) {
   const entries = readdirSync(directoryPath, { withFileTypes: true })
   const files: string[] = []
@@ -320,6 +331,7 @@ function listSchemaSourceFiles(directoryPath: string) {
   return files.sort((left, right) => left.localeCompare(right))
 }
 
+// 判断 TypeScript 节点是否带有 export 修饰符。
 function hasExportModifier(node: ts.Node) {
   return Boolean(
     ts.canHaveModifiers(node) &&
@@ -329,6 +341,7 @@ function hasExportModifier(node: ts.Node) {
   )
 }
 
+// 从 snakeCase.table() 调用表达式中提取列定义对象字面量，返回 null 表示无列定义。
 function getTableColumnsDefinition(initializer: ts.Expression) {
   if (!ts.isCallExpression(initializer)) {
     return undefined
@@ -369,6 +382,7 @@ function getTableColumnsDefinition(initializer: ts.Expression) {
   return null
 }
 
+// 判断表达式是否为 snakeCase.table 属性访问。
 function isSnakeCaseTableExpression(expression: ts.LeftHandSideExpression) {
   if (
     ts.isPropertyAccessExpression(expression) &&
@@ -380,6 +394,7 @@ function isSnakeCaseTableExpression(expression: ts.LeftHandSideExpression) {
   return false
 }
 
+// 从 TypeScript 属性名节点提取字符串文本。
 function getPropertyName(name: ts.PropertyName) {
   if (
     ts.isIdentifier(name) ||
@@ -392,6 +407,7 @@ function getPropertyName(name: ts.PropertyName) {
   return null
 }
 
+// 提取节点上最后一段 JSDoc 注释文本。
 function getNodeJsDoc(node: ts.Node) {
   const jsDocNodes = ts
     .getJSDocCommentsAndTags(node)
@@ -409,6 +425,7 @@ function getNodeJsDoc(node: ts.Node) {
   return normalizeJsDocComment(renderJsDocComment(lastDoc.comment))
 }
 
+// 将 JSDoc comment 节点渲染为纯文本字符串。
 function renderJsDocComment(comment: ts.JSDoc['comment']) {
   if (typeof comment === 'string') {
     return comment
@@ -429,6 +446,7 @@ function renderJsDocComment(comment: ts.JSDoc['comment']) {
     .join('')
 }
 
+// 规范化 JSDoc 注释文本：统一换行、去除首尾空行。
 function normalizeJsDocComment(comment: string) {
   const normalizedLines = comment
     .replace(WINDOWS_NEWLINE_REGEX, '\n')
@@ -450,6 +468,7 @@ function normalizeJsDocComment(comment: string) {
   return normalizedLines.join('\n')
 }
 
+// 安全读取文件内容，文件不存在或读取失败时返回 null。
 function safeReadFile(filePath: string) {
   try {
     return readFileSync(filePath, 'utf8')
@@ -458,6 +477,7 @@ function safeReadFile(filePath: string) {
   }
 }
 
+// 构建表级或字段级的 schema comment 目标对象。
 function createSchemaCommentTarget(
   kind: SchemaCommentTarget['kind'],
   schemaName: string,
@@ -493,6 +513,9 @@ function createSchemaCommentTarget(
   }
 }
 
+/**
+ * 生成 schema comment 目标的唯一 key，用于去重和比对。
+ */
 export function getSchemaCommentTargetKey(
   kind: SchemaCommentTarget['kind'],
   schemaName: string,
@@ -502,10 +525,12 @@ export function getSchemaCommentTargetKey(
   return JSON.stringify([kind, schemaName, tableName, columnName ?? null])
 }
 
+// 对 SQL 标识符加双引号转义。
 function quoteQualifiedName(...parts: string[]) {
   return parts.map((part) => `"${part.replaceAll('"', '""')}"`).join('.')
 }
 
+// 将字符串转为 PostgreSQL E'...' 文本字面量，转义反斜杠、单引号和换行。
 function toPgTextLiteral(value: string) {
   return `E'${value
     .replaceAll('\\', '\\\\')

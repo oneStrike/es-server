@@ -143,6 +143,9 @@ const CONNECTION_ERROR_DESCRIPTOR: PostgresErrorResponseDescriptor = {
   messageKey: 'serviceUnavailable',
 }
 
+/**
+ * 将未知异常归类为安全 PostgreSQL 事实；业务层只能基于 facts 做显式分支。
+ */
 export function classifyPostgresError(
   error: unknown,
   options: PostgresErrorClassifierOptions = {},
@@ -150,6 +153,9 @@ export function classifyPostgresError(
   return classifyPostgresErrorValue(error, options.source, new Set<object>())
 }
 
+/**
+ * 根据 SQLSTATE 返回预定义的错误响应描述符；未知 sqlState 返回 null。
+ */
 export function getPostgresErrorResponseDescriptor(
   sqlState: string,
 ): PostgresErrorResponseDescriptor | null {
@@ -164,6 +170,9 @@ export function getPostgresErrorResponseDescriptor(
   return sqlState.slice(0, 2) === '08' ? CONNECTION_ERROR_DESCRIPTOR : null
 }
 
+/**
+ * 判断错误事实是否属于可重试类别（序列化失败或死锁）。
+ */
 export function isRetryablePostgresError(
   facts: PostgresErrorFacts,
   options: { retryDeadlock?: boolean } = {},
@@ -175,6 +184,7 @@ export function isRetryablePostgresError(
   )
 }
 
+// 递归遍历错误 cause 链，提取第一个可识别的 PostgreSQL 错误事实。
 function classifyPostgresErrorValue(
   value: unknown,
   source: PostgresErrorSource | undefined,
@@ -198,6 +208,7 @@ function classifyPostgresErrorValue(
   return buildFacts(carrier, source)
 }
 
+// 从错误 carrier 中提取 sqlState 并组装安全事实对象。
 function buildFacts(
   carrier: PostgresErrorCarrier,
   requestedSource: PostgresErrorSource | undefined,
@@ -223,6 +234,7 @@ function buildFacts(
   }
 }
 
+// 根据 SQLSTATE class 前缀归类错误类别。
 function getPostgresErrorCategory(sqlState: string): PostgresErrorCategory {
   const sqlStateClass = sqlState.slice(0, 2)
   if (sqlStateClass === '08') {
@@ -247,6 +259,7 @@ function getPostgresErrorCategory(sqlState: string): PostgresErrorCategory {
   return 'unknown'
 }
 
+// 判断 sqlState 是否属于可重试类别（序列化失败或死锁）。
 function isRetryableSqlState(sqlState: string): boolean {
   return (
     sqlState === PostgresErrorCode.SERIALIZATION_FAILURE ||
@@ -254,10 +267,12 @@ function isRetryableSqlState(sqlState: string): boolean {
   )
 }
 
+// 校验字符串是否符合 SQLSTATE 五位字母数字格式。
 function isSqlState(code: string): boolean {
   return SQLSTATE_PATTERN.test(code)
 }
 
+// 判断 code 是否属于已知 PostgreSQL 错误码常量。
 function isKnownPostgresErrorCode(
   code: string,
 ): code is PostgresErrorCodeValue {
@@ -266,10 +281,12 @@ function isKnownPostgresErrorCode(
   )
 }
 
+// 类型守卫：判断值是否为非 null 对象。
 function isObject(value: unknown): value is object {
   return typeof value === 'object' && value !== null
 }
 
+// 从未知值中安全提取字符串，非字符串返回 undefined。
 function getString(value: unknown): string | undefined {
   return typeof value === 'string' ? value : undefined
 }

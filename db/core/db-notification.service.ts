@@ -34,10 +34,10 @@ interface DbNotificationRuntimeConfig {
 }
 
 /**
- * Stable low-level PostgreSQL LISTEN/NOTIFY primitive for cross-instance coordination.
+ * 稳定的低层 PostgreSQL LISTEN/NOTIFY 原语，用于跨实例协调。
  *
- * Query traffic stays on the shared `Pool`; all subscriptions in one process multiplex
- * through one independent `pg.Client`, keyed by channel and reference-counted callbacks.
+ * 查询流量仍走共享 `Pool`；一个进程内所有订阅通过一个独立的 `pg.Client` 多路复用，
+ * 按通道和引用计数回调分发通知。
  */
 @Injectable()
 export class DbNotificationService implements OnApplicationShutdown {
@@ -149,6 +149,7 @@ export class DbNotificationService implements OnApplicationShutdown {
     await this.closeAllSubscriptions()
   }
 
+  // 移除回调并按需 UNLISTEN 通道；最后一个回调移除后关闭独立 listener client。
   private async unsubscribe(
     channel: string,
     callback: NotificationCallback,
@@ -189,6 +190,7 @@ export class DbNotificationService implements OnApplicationShutdown {
     })
   }
 
+  // 按需创建或复用独立 listener client，并同步当前所有通道的 LISTEN。
   private async ensureListener(): Promise<void> {
     if (this.isShuttingDown || this.channels.size === 0) {
       return
@@ -243,6 +245,7 @@ export class DbNotificationService implements OnApplicationShutdown {
     }
   }
 
+  // 对当前 client 补齐尚未 LISTEN 的通道。
   private async syncListeningChannels(client: Client): Promise<void> {
     for (const channel of this.channels.keys()) {
       if (this.listeningChannels.has(channel)) {
@@ -254,6 +257,7 @@ export class DbNotificationService implements OnApplicationShutdown {
     }
   }
 
+  // 处理 listener client 故障：清理状态、通知订阅者并调度重连。
   private async handleClientFailure(
     client: Client,
     error: Error,
@@ -268,6 +272,7 @@ export class DbNotificationService implements OnApplicationShutdown {
     this.reportListenerFailure(error)
   }
 
+  // 记录 listener 故障日志并通知所有订阅者的 onError 回调。
   private reportListenerFailure(error: Error): void {
     if (this.isShuttingDown) {
       return
@@ -281,6 +286,7 @@ export class DbNotificationService implements OnApplicationShutdown {
     this.scheduleReconnect()
   }
 
+  // 按指数退避策略调度下一次重连尝试。
   private scheduleReconnect(): void {
     if (
       this.isShuttingDown ||
@@ -307,6 +313,7 @@ export class DbNotificationService implements OnApplicationShutdown {
     }, this.reconnectDelayMs)
   }
 
+  // 关闭当前活动 client 并清理通道状态。
   private async closeActiveClient(): Promise<void> {
     const client = this.client
     this.client = undefined
@@ -317,6 +324,7 @@ export class DbNotificationService implements OnApplicationShutdown {
     }
   }
 
+  // 安全关闭 listener client 并移除事件监听。
   private async endClient(client: Client): Promise<void> {
     client.removeListener('notification', this.handleNotification)
 
@@ -329,6 +337,7 @@ export class DbNotificationService implements OnApplicationShutdown {
     }
   }
 
+  // 向所有通道的所有订阅者广播错误回调。
   private notifySubscriberErrors(error: Error): void {
     for (const channel of this.channels.values()) {
       for (const callback of channel.callbacks) {
@@ -337,6 +346,7 @@ export class DbNotificationService implements OnApplicationShutdown {
     }
   }
 
+  // 收到 PostgreSQL NOTIFY 时按通道分发到对应回调。
   private readonly handleNotification = (notification: Notification) => {
     const channel = notification.channel
     if (!channel) {
@@ -362,6 +372,7 @@ export class DbNotificationService implements OnApplicationShutdown {
     }
   }
 
+  // 通知单个订阅者的 onError 回调，捕获并记录回调自身的异常。
   private invokeCallbackError(
     callback: NotificationCallback,
     error: Error,
@@ -376,6 +387,7 @@ export class DbNotificationService implements OnApplicationShutdown {
     }
   }
 
+  // 清除挂起的重连定时器。
   private clearReconnectTimer(): void {
     if (!this.reconnectTimer) {
       return
@@ -386,6 +398,7 @@ export class DbNotificationService implements OnApplicationShutdown {
     this.reconnectDelayMs = null
   }
 
+  // 将操作串行化排队，保证 LISTEN/UNLISTEN 和连接管理不会交错执行。
   private async enqueue(operation: () => Promise<void>): Promise<void> {
     const queuedOperation = this.operationQueue.then(operation, operation)
     this.operationQueue = queuedOperation.then(

@@ -62,6 +62,7 @@ export async function createSeedPasswordHash() {
 
 export const SEED_PLATFORM_ALL = [1, 2, 3]
 
+// 根据索引获取 seed reader 账号 slug，越界时抛出异常。
 export function createSeedReaderAccount(index: number) {
   const account = SEED_READER_ACCOUNT_SLUGS[index - 1]
   if (!account) {
@@ -122,18 +123,22 @@ export const DICTIONARY_ITEMS = {
   },
 } as const
 
+// 生成 seed 账号的头像 URL。
 export function createAvatar(seed: string) {
   return `https://api.dicebear.com/9.x/thumbs/svg?seed=${seed}`
 }
 
+// 返回指定日期加上指定分钟数后的 Date。
 export function addMinutes(date: Date, minutes: number) {
   return new Date(date.getTime() + minutes * 60 * 1000)
 }
 
+// 返回指定日期加上指定小时数后的 Date。
 export function addHours(date: Date, hours: number) {
   return new Date(date.getTime() + hours * 60 * 60 * 1000)
 }
 
+// 将值序列化为 JSON 文本字符串，用于 jsonb 字段写入。
 export function asJsonText(
   value:
     | string

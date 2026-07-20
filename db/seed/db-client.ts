@@ -12,6 +12,7 @@ export interface SeedDbClient {
   pool: Pool
 }
 
+// 从环境变量读取 DATABASE_URL，缺失时抛出异常。
 export function getDatabaseUrl() {
   const url = process.env.DATABASE_URL
   if (!url) {
@@ -20,6 +21,7 @@ export function getDatabaseUrl() {
   return url
 }
 
+// 使用连接字符串创建 Drizzle + pg.Pool 客户端实例。
 export function createDbClient(connectionString: string): SeedDbClient {
   const pool = new Pool({ connectionString })
 
@@ -33,6 +35,7 @@ export function createDbClient(connectionString: string): SeedDbClient {
   return { db, pool }
 }
 
+// 关闭 seed 客户端的底层连接池。
 export async function disconnectDbClient({ pool }: SeedDbClient) {
   await pool.end()
 }

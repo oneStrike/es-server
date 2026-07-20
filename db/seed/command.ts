@@ -6,6 +6,7 @@ interface DemoSeedCommand {
   checkEnvironmentOnly: boolean
 }
 
+// 解析 demo seed 命令行参数，返回是否仅检查环境。
 function readCommand(argv = process.argv): DemoSeedCommand {
   const args = argv.slice(2)
   let checkEnvironmentOnly = false
@@ -28,6 +29,7 @@ function readCommand(argv = process.argv): DemoSeedCommand {
   return { checkEnvironmentOnly }
 }
 
+// demo seed 命令入口：先检查环境，再执行 seed。
 async function main(): Promise<void> {
   const command = readCommand()
   const environment = assertSafeDemoSeedEnvironment(process.env)

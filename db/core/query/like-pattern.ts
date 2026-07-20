@@ -5,6 +5,9 @@ const BACKSLASH_REGEX = /\\/g
 const PERCENT_REGEX = /%/g
 const UNDERSCORE_REGEX = /_/g
 
+/**
+ * 转义 LIKE/ILIKE 模式中的特殊字符（反斜杠、百分号、下划线）。
+ */
 export function escapeLikePattern(input: string): string {
   return input
     .replace(BACKSLASH_REGEX, '\\\\')

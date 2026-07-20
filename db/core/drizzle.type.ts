@@ -44,6 +44,7 @@ export interface DrizzleErrorMessages {
   notFound?: string
 }
 
+/** 事务重试选项；必须显式声明 safeToRetry=true 才能启用重试。 */
 export interface DrizzleTransactionRetryOptions {
   safeToRetry: true
   maxAttempts: number
@@ -69,6 +70,7 @@ export interface DrizzleTransactionOptions<T> {
 /** 稳定领域类型 `DrizzleMutationResult`。仅供内部领域/服务链路复用，避免重复定义。 */
 export type DrizzleMutationResult = { rowCount?: number | null } | unknown[]
 
+/** 安全可日志输出的数据库错误诊断信息。 */
 export interface DatabaseErrorDiagnostic {
   errorName: string
   facts: PostgresErrorFacts | null

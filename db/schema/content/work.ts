@@ -126,7 +126,7 @@ export const work = snakeCase.table(
      */
     canComment: boolean().default(true).notNull(),
     /**
-     * 推荐权重
+     * 推荐权重（1.0=默认权重，数值越大推荐优先级越高）
      */
     recommendWeight: doublePrecision().default(1.0).notNull(),
     /**

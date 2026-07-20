@@ -237,6 +237,7 @@ export class DrizzleService {
     )
   }
 
+  // 校验事务重试选项的合法性。
   private assertRetryOptions(retry: DrizzleTransactionRetryOptions) {
     if (retry.safeToRetry !== true) {
       throw new Error('transaction retry requires safeToRetry: true')
@@ -246,6 +247,7 @@ export class DrizzleService {
     }
   }
 
+  // 计算第 n 次重试的退避延迟（毫秒），含指数增长和随机抖动。
   private getRetryDelayMs(
     attempt: number,
     baseDelayMs: number,
@@ -258,10 +260,12 @@ export class DrizzleService {
     return Math.round(capped + jitter)
   }
 
+  // 延迟指定毫秒数的 Promise 封装。
   private async delay(ms: number) {
     return new Promise((resolve) => setTimeout(resolve, ms))
   }
 
+  // 记录事务重试指标到日志。
   private logTransactionRetryMetric(
     facts: PostgresErrorFacts,
     retryAttempt: number,

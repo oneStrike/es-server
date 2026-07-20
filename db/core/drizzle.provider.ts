@@ -9,13 +9,14 @@ import { Pool } from 'pg'
 import { relations } from './drizzle-relations'
 import { buildSafeDatabaseDiagnostic } from './error/error-handler'
 
-// Internal raw pg Pool token. Keep it out of @db/core's public barrel; inject it
-// only for driver-level features such as LISTEN/NOTIFY or lifecycle management.
+// 内部原始 pg Pool token，不暴露在 @db/core 的 public barrel 中；
+// 仅供 LISTEN/NOTIFY 或生命周期管理等 driver 级特性注入使用。
 export const DRIZZLE_POOL = 'DRIZZLE_POOL'
 export const DRIZZLE_DB = 'DRIZZLE_DB'
-// Internal runtime wiring only. It intentionally remains outside @db/core's public barrel.
+// 内部运行时配置 token，不暴露在 @db/core 的 public barrel 中。
 export const DRIZZLE_RUNTIME_CONFIG = 'DRIZZLE_RUNTIME_CONFIG'
 
+/** 数据库连接池运行时配置。 */
 interface DrizzleRuntimeConfig {
   connectionString: string
   poolMax: number
@@ -25,6 +26,7 @@ interface DrizzleRuntimeConfig {
   listenerConnections: 0 | 1
 }
 
+/** 从 ConfigService 解析数据库连接池运行时配置的 Provider。 */
 export const DrizzleRuntimeConfigProvider: Provider = {
   provide: DRIZZLE_RUNTIME_CONFIG,
   useFactory: (configService: ConfigService): DrizzleRuntimeConfig => {
@@ -56,6 +58,7 @@ export const DrizzleRuntimeConfigProvider: Provider = {
   inject: [ConfigService],
 }
 
+/** 从运行时配置创建 pg.Pool 的 Provider。 */
 export const DrizzlePoolProvider: Provider = {
   provide: DRIZZLE_POOL,
   useFactory: (runtimeConfig: DrizzleRuntimeConfig): Pool => {
@@ -81,6 +84,7 @@ export const DrizzlePoolProvider: Provider = {
   inject: [DRIZZLE_RUNTIME_CONFIG],
 }
 
+/** 从 pg.Pool 创建 Drizzle 实例的 Provider。 */
 export const DrizzleDbProvider: Provider = {
   provide: DRIZZLE_DB,
   useFactory: (pool: Pool): Db =>

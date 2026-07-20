@@ -90,6 +90,7 @@ export async function runDemoSeed(options: DemoSeedRunOptions) {
   }
 }
 
+// 重置 public schema 中所有 id 序列为当前最大值 +1。
 async function resetPublicIdentitySequences(db: Db) {
   await db.execute(sql`
     DO $$
@@ -137,6 +138,7 @@ async function cleanupRetiredDemoDomains(db: Db) {
   console.log('  ✓ 退役演示域清理完成')
 }
 
+// 清理旧版压测与退役数据遗留的论坛板块与主题。
 async function cleanupLegacyForumResidue(db: Db) {
   await db.execute(sql`
     WITH target_forum_sections AS (
@@ -274,6 +276,7 @@ async function cleanupLegacyForumResidue(db: Db) {
   `)
 }
 
+// 清理用户、互动、通知与论坛主题等旧数据，保留配置类表。
 async function cleanupRetiredAppUserDomain(db: Db) {
   await db.delete(schema.notificationDelivery)
   await db.delete(schema.notificationPreference)
@@ -348,6 +351,7 @@ async function cleanupRetiredAppUserDomain(db: Db) {
   console.log('  ✓ 已清理旧用户、互动、提及与论坛主题数据')
 }
 
+// 清理作品、章节、导入任务等旧数据及其关联互动记录。
 async function cleanupRetiredWorkDomain(db: Db) {
   await db.execute(sql`
     WITH target_work_ids AS (
@@ -566,6 +570,7 @@ async function cleanupRetiredWorkDomain(db: Db) {
   `)
 }
 
+// 清理聊天会话、消息与成员旧数据。
 async function cleanupRetiredChatDomain(db: Db) {
   await db.execute(sql`
     WITH deleted_members AS (
