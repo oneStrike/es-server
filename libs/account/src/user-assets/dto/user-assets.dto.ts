@@ -10,7 +10,7 @@ export class BaseUserAssetsSummaryDto {
 
   @DateProperty({
     description: 'VIP 到期时间',
-    example: '2026-06-01T00:00:00.000Z',
+    example: '2026-06-02T00:00:00.000Z',
     nullable: true,
     validation: false,
   })
