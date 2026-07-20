@@ -20,6 +20,14 @@
 
 破坏性更新只保留当前 canonical contract，不保留旧客户端、旧配置、旧数据值域或旧 migration log 的运行时解释能力。未被显式决策覆盖的 contract 变化必须先形成新的显式决策。
 
+## 顶层 owner 边界
+
+- `apps/*` 是入口与 app-exclusive 纵向业务 owner；只被单一 app 使用的业务逻辑、DTO、provider adapter 与 DB provider 可以放在对应 app 内，并由该 app 的 composition root 显式装配。
+- `libs/*` 只承载跨 app 或真实共享领域。不得为了“看起来共享”把 app-only DTO、admin/app 专属 auth、RBAC runtime、token storage adapter 或其他单 app 纵向能力提升到 `libs/*`。
+- `db/*` 继续拥有 schema、relation、Drizzle core、migration、comments 与 seed/bootstrap 操作事实源；业务 owner 可以消费受控 `@db/schema` / `@db/core` public API，但不能复制 schema/relation source。
+- identity hard cut 不保留 `libs/identity`、`@libs/identity/*`、`IdentityModule`、替代 identity umbrella、compat shim、alias re-export、双读双写、旧字段/旧 ORM API fallback 或旧 migration journal 解释能力。
+- 仓库不保留测试文件；验证资产只能是受控 operation/static gate、脱敏 evidence 或使用后删除的一次性 probe。
+
 ## 规范文件索引
 
 - [导入边界规范](./01-import-boundaries.md) - 导入边界与分层规则

@@ -35,6 +35,12 @@ reconcile/rollback helper 或迁移兼容分支。
 部署编排必须保证每个环境同一时间只有一个 migration job，应用启动不得执行 migration。
 `pnpm db:migrate`、compose 和普通验证命令都不执行 reset、seed 或 bootstrap。
 
+DB source 拆分必须只改变 owner 文件，不改变物理 SQL contract。admin / user schema 和 relation
+source 分别放在 `db/schema/admin/*`、`db/schema/user/*`、`db/relations/admin.ts` 与
+`db/relations/user.ts`；SQL 表名、列、导出符号、relation root key 和 relation edge 必须保持
+稳定。owner adapter 可以保存具体 SQL 查询细节；`db/core` 不得变成 DB-aware generic
+repository、manager、helper 或旧 identity 兼容层。
+
 ## 当前 `foo` migration boundary
 
 当前项目唯一业务数据库是 `foo`。本次已授权的破坏性重置以当前 initial migration 建立
@@ -71,4 +77,5 @@ demo seed 要求 `ALLOW_DB_SEED=true`，且在 `NODE_ENV=production/prod` 或连
 创建的 `super_admin` 角色，必须在至少一次成功的 `admin-api` 启动之后执行。
 
 禁止 `drizzle-kit push`、`drizzle-kit push --force`、`db:push`、`--ignore-conflicts`、
-未登记临时写入和任何旧 migration fallback。任何失败都停止并记录必要的脱敏诊断。
+未登记临时写入、identity alias migration、旧 journal 解释器、compat view、双读写和任何旧
+migration fallback。任何失败都停止并记录必要的脱敏诊断。

@@ -1,15 +1,5 @@
-import type {
-  LoginResponseDto,
-  UserLoginDto,
-} from '@libs/identity/dto/admin-auth.dto'
-import type { SessionClientContext } from '@libs/identity/session.type'
-import {
-  AdminAuthCacheKeys,
-  AdminAuthRedisKeys,
-} from '@libs/identity/admin-auth.constant'
-import { AdminRbacService } from '@libs/identity/admin-rbac.service'
-import { AdminUserIdentityService } from '@libs/identity/admin-user.service'
-import { AuthSessionService } from '@libs/identity/session.service'
+import type { SessionClientContext } from '@libs/platform/modules/auth/types'
+import type { LoginResponseDto, UserLoginDto } from './dto/admin-auth.dto'
 import { AuthService as BaseAuthService } from '@libs/platform/modules/auth/auth.service'
 import { RefreshTokenDto, TokenDto } from '@libs/platform/modules/auth/dto'
 import {
@@ -17,6 +7,7 @@ import {
   AuthErrorMessages,
 } from '@libs/platform/modules/auth/helpers'
 import { LoginGuardService } from '@libs/platform/modules/auth/login-guard.service'
+import { AuthSessionService } from '@libs/platform/modules/auth/session.service'
 
 import { CaptchaService } from '@libs/platform/modules/captcha/captcha.service'
 import { RsaService } from '@libs/platform/modules/crypto/rsa.service'
@@ -29,6 +20,9 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common'
+import { AdminRbacService } from '../rbac/admin-rbac.service'
+import { AdminAuthAccountService } from './admin-auth-account.service'
+import { AdminAuthCacheKeys, AdminAuthRedisKeys } from './admin-auth.constant'
 
 /**
  * 管理端认证服务。
@@ -37,7 +31,7 @@ import {
 @Injectable()
 export class AuthService {
   constructor(
-    private readonly adminUserIdentityService: AdminUserIdentityService,
+    private readonly adminAuthAccountService: AdminAuthAccountService,
     private readonly rsaService: RsaService,
     private readonly scryptService: ScryptService,
     private readonly baseJwtService: BaseAuthService,
@@ -82,7 +76,7 @@ export class AuthService {
     await this.captchaService.remove(AdminAuthCacheKeys.CAPTCHA, body.captchaId)
 
     // 查找用户
-    const user = await this.adminUserIdentityService.findLoginUserByUsername(
+    const user = await this.adminAuthAccountService.findLoginUserByUsername(
       body.username,
     )
     if (!user) {
@@ -140,7 +134,7 @@ export class AuthService {
     const lastLoginIp = clientContext.ip || 'unknown'
 
     // 更新登录信息
-    await this.adminUserIdentityService.updateLoginInfo(
+    await this.adminAuthAccountService.updateLoginInfo(
       user.id,
       lastLoginAt,
       lastLoginIp,
@@ -200,7 +194,7 @@ export class AuthService {
       throw new UnauthorizedException(AuthErrorMessages.LOGIN_INVALID)
     }
 
-    const user = await this.adminUserIdentityService.findAdminUserStatus(userId)
+    const user = await this.adminAuthAccountService.findAdminUserStatus(userId)
 
     if (!user) {
       await this.authSessionService.logout(tokens, { revokeDbTokens: true })

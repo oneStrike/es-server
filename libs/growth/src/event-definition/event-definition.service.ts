@@ -1,14 +1,21 @@
-import type { GrowthRuleTypeEnum } from '../growth-rule.constant'
 import type {
   EventDefinition,
   ListEventDefinitionFilters,
 } from './event-definition.type'
 import { Injectable } from '@nestjs/common'
 import {
+  GROWTH_RULE_TYPE_VALUES,
+  GrowthRuleTypeEnum,
+} from '../growth-rule.constant'
+import {
   EventDefinitionConsumerEnum,
   EventDefinitionImplStatusEnum,
 } from './event-definition.constant'
 import { EVENT_DEFINITION_MAP, EVENT_DEFINITIONS } from './event-definition.map'
+
+const GROWTH_RULE_TYPE_VALUE_SET: ReadonlySet<number> = new Set(
+  GROWTH_RULE_TYPE_VALUES,
+)
 
 /**
  * 事件定义查询服务。
@@ -20,9 +27,11 @@ export class EventDefinitionService {
   getEventDefinition(
     code: GrowthRuleTypeEnum | number,
   ): EventDefinition | undefined {
-    // eslint-disable-next-line ts/no-unsafe-assignment -- ESLint type checker cannot resolve Record<enum, T> indexed by number; tsc confirms type is EventDefinition
+    if (!this.isGrowthRuleType(code)) {
+      return undefined
+    }
+
     const definition = EVENT_DEFINITION_MAP[code]
-    // eslint-disable-next-line ts/no-unsafe-argument -- same false positive as above
     return definition ? this.cloneDefinition(definition) : undefined
   }
 
@@ -56,6 +65,7 @@ export class EventDefinitionService {
     })
   }
 
+  // 返回事件不可作为成长基础规则配置项时的首个业务原因。
   getRuleConfigDisabledReason(
     code: GrowthRuleTypeEnum | number | undefined,
   ): string | null {
@@ -125,5 +135,12 @@ export class EventDefinitionService {
       ...definition,
       consumers: [...definition.consumers],
     }
+  }
+
+  // 判定数值是否属于成长规则事件的闭集类型。
+  private isGrowthRuleType(
+    code: GrowthRuleTypeEnum | number,
+  ): code is GrowthRuleTypeEnum {
+    return GROWTH_RULE_TYPE_VALUE_SET.has(code)
   }
 }

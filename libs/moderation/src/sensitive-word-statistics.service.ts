@@ -27,7 +27,9 @@ import { QuerySensitiveWordHitLogDto } from './dto/sensitive-word.dto'
 import {
   SensitiveWordHitEntityTypeEnum,
   SensitiveWordHitLogEntityStatusEnum,
+  SensitiveWordLevelEnum,
   SensitiveWordLevelNames,
+  SensitiveWordTypeEnum,
   SensitiveWordTypeNames,
 } from './sensitive-word-constant'
 import {
@@ -191,8 +193,7 @@ export class SensitiveWordStatisticsService {
 
     return results.map((result) => ({
       level: result.level,
-      // eslint-disable-next-line ts/no-unsafe-assignment -- ESLint type checker cannot resolve Record<enum, T> indexed by number; tsc confirms type is string
-      levelName: SensitiveWordLevelNames[result.level] || '未知',
+      levelName: this.resolveSensitiveWordLevelName(result.level),
       count: Number(result.count),
       hitCount: Number(result.hitCount) || 0,
     }))
@@ -213,8 +214,7 @@ export class SensitiveWordStatisticsService {
 
     return results.map((result) => ({
       type: result.type,
-      // eslint-disable-next-line ts/no-unsafe-assignment -- ESLint type checker cannot resolve Record<enum, T> indexed by number; tsc confirms type is string
-      typeName: SensitiveWordTypeNames[result.type] || '未知',
+      typeName: this.resolveSensitiveWordTypeName(result.type),
       count: Number(result.count),
       hitCount: Number(result.hitCount) || 0,
     }))
@@ -268,6 +268,7 @@ export class SensitiveWordStatisticsService {
     }))
   }
 
+  // 查询敏感词命中明细分页，并补齐实体与作者摘要供管理端展示。
   async getHitLogPage(dto: QuerySensitiveWordHitLogDto) {
     const conditions = this.buildHitLogConditions(dto)
     const where = conditions.length > 0 ? and(...conditions) : undefined
@@ -388,6 +389,7 @@ export class SensitiveWordStatisticsService {
     )
   }
 
+  // 构建命中明细筛选条件，未指定日期时默认限制最近 7 天。
   private buildHitLogConditions(dto: QuerySensitiveWordHitLogDto): SQL[] {
     const conditions: SQL[] = []
     const wordPattern = buildLikePattern(dto.word)
@@ -444,6 +446,7 @@ export class SensitiveWordStatisticsService {
     return conditions
   }
 
+  // 汇总命中实体的管理端展示信息，并按实体状态决定是否暴露内容。
   private buildEntitySummary(row: {
     entityType: number
     topicId: number | null
@@ -501,6 +504,7 @@ export class SensitiveWordStatisticsService {
     }
   }
 
+  // 汇总命中实体作者信息，作者缺失时不返回摘要。
   private buildAuthorSummary(row: {
     authorAvatarUrl: string | null
     authorDeletedAt: Date | null
@@ -522,6 +526,7 @@ export class SensitiveWordStatisticsService {
     }
   }
 
+  // 按存在性、删除、隐藏与审核状态收敛命中实体状态。
   private resolveEntityStatus(input: {
     auditStatus: number | null
     deletedAt: Date | null
@@ -543,10 +548,12 @@ export class SensitiveWordStatisticsService {
     return SensitiveWordHitLogEntityStatusEnum.AVAILABLE
   }
 
+  // 判断当前实体状态是否允许打开管理端处置入口。
   private canOpenAdminDisposition(status: SensitiveWordHitLogEntityStatusEnum) {
     return !this.shouldHideEntityContent(status)
   }
 
+  // 判断当前实体状态下是否需要隐藏标题与内容摘要。
   private shouldHideEntityContent(status: SensitiveWordHitLogEntityStatusEnum) {
     return (
       status === SensitiveWordHitLogEntityStatusEnum.MISSING ||
@@ -554,9 +561,36 @@ export class SensitiveWordStatisticsService {
     )
   }
 
+  // 生成管理端内容摘要，空内容返回 null 且最多保留 200 字符。
   private buildSnippet(content: string | null | undefined) {
     const normalized = content?.replace(/\s+/g, ' ').trim()
     return normalized ? normalized.slice(0, 200) : null
+  }
+
+  // 将敏感词级别数值映射为展示名称，未知级别统一返回“未知”。
+  private resolveSensitiveWordLevelName(level: number) {
+    switch (level) {
+      case SensitiveWordLevelEnum.SEVERE:
+      case SensitiveWordLevelEnum.GENERAL:
+      case SensitiveWordLevelEnum.LIGHT:
+        return SensitiveWordLevelNames[level]
+      default:
+        return '未知'
+    }
+  }
+
+  // 将敏感词类型数值映射为展示名称，未知类型统一返回“未知”。
+  private resolveSensitiveWordTypeName(type: number) {
+    switch (type) {
+      case SensitiveWordTypeEnum.POLITICS:
+      case SensitiveWordTypeEnum.PORN:
+      case SensitiveWordTypeEnum.VIOLENCE:
+      case SensitiveWordTypeEnum.AD:
+      case SensitiveWordTypeEnum.OTHER:
+        return SensitiveWordTypeNames[type]
+      default:
+        return '未知'
+    }
   }
 
   // 在业务写事务中记录敏感词命中，并同步词表累计快照。 管理端检测/替换接口不调用该方法，避免把调试流量混入业务统计。

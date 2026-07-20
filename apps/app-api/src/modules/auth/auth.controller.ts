@@ -1,5 +1,4 @@
 import type { FastifyRequest } from 'fastify'
-import { AppLoginResponseDto } from '@libs/identity/dto/app-auth.dto'
 import { ApiDoc, CurrentUser, Public } from '@libs/platform/decorators'
 
 import {
@@ -17,6 +16,7 @@ import { extractIpAddress } from '@libs/platform/utils'
 import { Body, Controller, Get, Post, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { AuthService } from './auth.service'
+import { AppLoginResponseDto } from './dto/app-auth.dto'
 import { PasswordService } from './password.service'
 import { SmsService } from './sms.service'
 
@@ -39,6 +39,7 @@ export class AuthController {
     },
   })
   @Public()
+  // 公开发送验证码入口，记录请求 IP 供短信服务做风控与频控。
   async sendVerifyCode(
     @Body() body: SendVerifyCodeDto,
     @Req() req: FastifyRequest,
@@ -52,6 +53,7 @@ export class AuthController {
     model: RsaPublicKeyDto,
   })
   @Public()
+  // 向客户端暴露当前 RSA 公钥，用于登录等敏感字段加密。
   getPublicKey() {
     return {
       publicKey: this.rsaService.getPublicKey(),
@@ -64,6 +66,7 @@ export class AuthController {
     model: AppLoginResponseDto,
   })
   @Public()
+  // APP 登录入口，补齐客户端请求环境后交给认证服务签发会话。
   async login(@Body() body: LoginDto, @Req() req: FastifyRequest) {
     return this.authService.login(
       body,
@@ -78,6 +81,7 @@ export class AuthController {
       type: 'boolean',
     },
   })
+  // 注销指定 token，会撤销会话并让后续校验命中无效状态。
   async logout(@Body() body: TokenDto) {
     return this.authService.logout(body)
   }
@@ -88,6 +92,7 @@ export class AuthController {
     model: TokenDto,
   })
   @Public()
+  // 使用 refresh token 换发新会话，客户端环境用于记录新 token 来源。
   async refreshToken(
     @Body() body: RefreshTokenDto,
     @Req() req: FastifyRequest,
@@ -101,9 +106,10 @@ export class AuthController {
   @Post('password/forgot')
   @ApiDoc({
     summary: '找回密码',
-    model: AppLoginResponseDto,
+    model: Boolean,
   })
   @Public()
+  // 找回密码入口，校验/重置后撤销旧会话，并对不存在手机号统一返回成功以防枚举。
   async forgotPassword(@Body() body: ForgotPasswordDto) {
     return this.passwordService.forgotPassword(body)
   }
@@ -115,6 +121,7 @@ export class AuthController {
       type: 'boolean',
     },
   })
+  // 已登录用户修改自身密码，用户身份只取当前访问令牌主体。
   async changePassword(
     @Body() body: ChangePasswordDto,
     @CurrentUser('sub') userId: number,

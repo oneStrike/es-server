@@ -25,6 +25,7 @@
   - `@libs/platform/modules/auth/auth.strategy`
   - `@libs/platform/modules/auth/base-token-storage.service`
   - `@libs/platform/modules/auth/login-guard.service`
+  - `@libs/platform/modules/auth/session.service`
   - `@libs/platform/modules/auth/dto`
   - `@libs/platform/modules/auth/helpers`
   - `@libs/platform/modules/auth/types`
@@ -36,6 +37,7 @@
   - `@libs/platform/modules/crypto/rsa.service`
   - `@libs/platform/modules/crypto/scrypt.service`
   - `@libs/platform/modules/geo/dto`
+  - `@libs/platform/modules/geo/geo.constant`
   - `@libs/platform/modules/geo/geo.module`
   - `@libs/platform/modules/geo/geo.service`
   - `@libs/platform/modules/geo/geo.type`

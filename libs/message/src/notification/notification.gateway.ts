@@ -1,4 +1,4 @@
-import type { ServerOptions, WebSocket } from 'ws'
+import type { ServerOptions, VerifyClientCallbackSync, WebSocket } from 'ws'
 import type {
   WsAuthPayload,
   WsReadPayload,
@@ -44,8 +44,9 @@ function isMessageWsOriginAllowed(origin?: string): boolean {
 }
 
 const messageWsVerifyClient: ServerOptions['verifyClient'] =
-  function verifyMessageWsClient(info): boolean {
-    // eslint-disable-next-line ts/no-unsafe-argument, ts/no-unsafe-member-access -- ws VerifyClient info 类型推导为 unknown，tsc 确认类型安全
+  function verifyMessageWsClient(
+    info: Parameters<VerifyClientCallbackSync>[0],
+  ): boolean {
     return isMessageWsOriginAllowed(info.origin)
   }
 
@@ -71,6 +72,7 @@ export class MessageGateway
   }
 
   @SubscribeMessage('auth')
+  // 处理 native ws 鉴权边界，并按认证结果回包或断开连接。
   async handleAuth(
     @ConnectedSocket() client: WebSocket,
     @MessageBody() body: WsAuthPayload,
@@ -86,11 +88,13 @@ export class MessageGateway
   }
 
   @SubscribeMessage('ping')
+  // 响应 native ws 心跳探测，保持协议层只返回 pong 事件。
   handlePing(@ConnectedSocket() client: WebSocket) {
     client.send(this.messageWebSocketService.createNativeEventMessage('pong'))
   }
 
   @SubscribeMessage('chat.send')
+  // 接收聊天发送 WS 命令，并把业务处理结果转换为 native ack。
   async handleChatSend(
     @ConnectedSocket() client: WebSocket,
     @MessageBody() body: WsRequestEnvelope<WsSendPayload>,
@@ -106,6 +110,7 @@ export class MessageGateway
   }
 
   @SubscribeMessage('chat.read')
+  // 接收聊天已读 WS 命令，并把业务处理结果转换为 native ack。
   async handleChatRead(
     @ConnectedSocket() client: WebSocket,
     @MessageBody() body: WsRequestEnvelope<WsReadPayload>,

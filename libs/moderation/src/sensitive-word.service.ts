@@ -65,11 +65,18 @@ export class SensitiveWordService {
       )
     }
 
-    ;['isEnabled', 'level', 'type', 'matchMode'].forEach((key) => {
-      if (dto[key] !== undefined) {
-        conditions.push(eq(this.sensitiveWord[key], dto[key]))
-      }
-    })
+    if (dto.isEnabled !== undefined) {
+      conditions.push(eq(this.sensitiveWord.isEnabled, dto.isEnabled))
+    }
+    if (dto.level !== undefined) {
+      conditions.push(eq(this.sensitiveWord.level, dto.level))
+    }
+    if (dto.type !== undefined) {
+      conditions.push(eq(this.sensitiveWord.type, dto.type))
+    }
+    if (dto.matchMode !== undefined) {
+      conditions.push(eq(this.sensitiveWord.matchMode, dto.matchMode))
+    }
 
     const where = conditions.length > 0 ? and(...conditions) : undefined
     const page = this.drizzle.buildPage(dto)
@@ -186,6 +193,7 @@ export class SensitiveWordService {
     }
   }
 
+  // 将管理端列表查询行映射为敏感词输出 DTO，并统一空值边界。
   private toSensitiveWordOutputDto(
     word: SensitiveWordAdminPageRow,
   ): SensitiveWordOutputDto {
@@ -207,6 +215,7 @@ export class SensitiveWordService {
     }
   }
 
+  // 限定敏感词管理端分页查询需要返回的字段集合。
   private buildSensitiveWordAdminPageSelect() {
     return {
       id: this.sensitiveWord.id,

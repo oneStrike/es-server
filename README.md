@@ -6,8 +6,9 @@
 
 - `apps/admin-api`：管理端 API 入口。
 - `apps/app-api`：用户端 API 入口。
-- `libs/*`：共享业务模块、平台能力与 DTO 契约。
-- `db/*`：Drizzle schema、数据库核心能力、扩展与 seed。
+- `libs/*`：跨 app 或真实共享的业务模块、平台能力与 DTO 契约。
+- `apps/*` 下的 feature module：只服务单一 app 的纵向业务逻辑、DTO 与 DB provider 可以贴近对应 app owner。
+- `db/*`：Drizzle schema、relation、数据库核心能力、扩展与 seed。
 - `docs/*`：审计、任务单和说明性文档。
 - `.trae/rules/PROJECT_RULES.md`：仓库级规范入口。
 
@@ -31,8 +32,13 @@ pnpm start:app
 pnpm build:admin
 pnpm build:app
 
+# 运行已构建产物
+pnpm serve:admin
+pnpm serve:app
+
 # 验证
 pnpm type-check
+pnpm identity:hard-cut:check
 
 # 数据库：只读检查
 pnpm db:migration:check

@@ -5,7 +5,7 @@
 ## TL;DR
 
 - 何时看：改导入路径、文件放置、barrel、`libs/platform` / `db` 入口时先看本篇。
-- 必做：业务域默认直连 owner 文件；命中 `libs/platform`、`db` 时只走白名单公共入口；所有 runtime edge 同时遵循唯一 package DAG。
+- 必做：业务域默认直连 owner 文件；app-exclusive 纵向 owner 可在对应 `apps/*` 内直连具体文件；命中 `libs/platform`、`db` 时只走白名单公共入口；所有 runtime edge 同时遵循唯一 package DAG。
 - 不要：新增转发入口、反向 package edge 或循环依赖，不要用目录语义路径代替具体文件，也不要直连 `libs/platform` / `db` 具体文件。
 - 最低验证：`pnpm type-check` 与对应 import/owner static gate；不得引用不存在的 `pnpm boundaries:check`。
 
@@ -19,6 +19,8 @@
 - 对 `@libs/platform/*`、`@db/*` 而言，“文件是否存在”“owner 文件更短”“当前只用一个符号”都不构成直连理由；必须回到白名单目录入口拿符号。
 - DTO 文件默认只依赖稳定 DTO、常量、类型和声明期组合工具；禁止通过 DTO 拉起业务运行时对象。
 - Service、Resolver、Module、Controller 直接依赖 owner 文件，不通过中间入口“顺手带出”其他符号。
+- `apps/*` 可以拥有只服务本 app 的纵向业务逻辑、DTO、provider adapter 与 DB provider；这些符号仍必须直连具体 owner 文件，不能通过 app 目录 barrel、替代 umbrella 或 compat alias 暴露。
+- `libs/*` 只承载跨 app 或真实共享领域；禁止把 app-only 纵向能力提升为共享包，也禁止为旧 `identity` 形状保留 `@libs/identity/*`、`IdentityModule`、alias re-export 或替代 umbrella。
 - 文件直连不等于允许跨越 package DAG；任何 runtime import 都必须同时满足 09 规则定义的方向。
 - 禁止通过“调整导出顺序”、`forwardRef()`、动态 lookup 或 barrel 掩盖循环依赖；应删除反向边并收敛 owner。
 - 不保留 deprecated import alias、旧 module 入口或第二套公共路径。
@@ -45,7 +47,7 @@
 - DTO 文件禁止导入：任何 barrel、`*.service.ts`、`*.module.ts`、`*.resolver.ts`，以及会引入业务行为的 provider、service、repository、entity、module 级依赖。
 - Service / Resolver / Module / Controller 必须直连具体文件，不通过 DTO barrel。
 - 业务域 `types/` 目录下的类型文件同样必须直连具体 `*.type.ts` 文件；禁止导入 `../types`、`@libs/foo/bar/types` 这类目录语义路径。
-- `apps/*` 也必须直连具体文件，不是例外；它只做 composition、transport、启动与 adapter 绑定。
+- `apps/*` 也必须直连具体文件，不是例外；它负责 composition、transport、启动、adapter 绑定，以及只服务本 app 的纵向业务 owner。
 - 跨域同步接口由 consumer owner 定义，adapter 由 app composition 绑定；异步事实 contract 由 producer owner 定义。导入方向不得因此反转。
 - owner service 可以按 09 规则直接依赖 `DrizzleService`；禁止为了“统一边界”把所有数据库调用搬进通用 repository/port。
 

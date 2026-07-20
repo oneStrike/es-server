@@ -1,16 +1,19 @@
 import type { ITokenStorageService } from '@libs/platform/modules/auth/types'
 import { randomInt } from 'node:crypto'
-import { AppUserCredentialService } from '@libs/identity/app-user-credential.service'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import {
   ChangePasswordDto,
   ForgotPasswordDto,
 } from '@libs/platform/modules/auth/dto'
-import { RevokeTokenReasonEnum } from '@libs/platform/modules/auth/helpers'
+import {
+  RevokeTokenReasonEnum,
+  TOKEN_STORAGE_SERVICE,
+} from '@libs/platform/modules/auth/helpers'
 import { RsaService } from '@libs/platform/modules/crypto/rsa.service'
 import { ScryptService } from '@libs/platform/modules/crypto/scrypt.service'
 import { SmsTemplateCodeEnum } from '@libs/platform/modules/sms/sms.constant'
+import { AppUserCredentialService } from '@libs/user/app-user-credential.service'
 import { UserService as UserCoreService } from '@libs/user/user.service'
 import { ForbiddenException, Inject, Injectable } from '@nestjs/common'
 import { AppAuthErrorMessages } from './auth.constant'
@@ -27,7 +30,7 @@ export class PasswordService {
     private readonly rsaService: RsaService,
     private readonly smsService: SmsService,
     private readonly scryptService: ScryptService,
-    @Inject('ITokenStorageService')
+    @Inject(TOKEN_STORAGE_SERVICE)
     private readonly tokenStorageService: ITokenStorageService,
     private readonly userCoreService: UserCoreService,
   ) {}

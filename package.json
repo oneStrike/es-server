@@ -10,8 +10,10 @@
     "reinstall": "rimraf ./node_modules && pnpm install",
     "build:admin": "cross-env NODE_ENV=production nest build admin-api",
     "build:app": "cross-env NODE_ENV=production nest build app-api",
-    "start:admin": "nest build admin-api --webpack --webpackPath webpack.config.js --watch",
-    "start:app": "nest build app-api --webpack --webpackPath webpack.config.js --watch",
+    "start:admin": "nest start admin-api --webpack --webpackPath webpack.config.js --watch",
+    "start:app": "nest start app-api --webpack --webpackPath webpack.config.js --watch",
+    "serve:admin": "cross-env NODE_ENV=production node dist/apps/admin-api/main.js",
+    "serve:app": "cross-env NODE_ENV=production node dist/apps/app-api/main.js",
     "lint": "eslint \"{apps,libs,scripts,db}/**/*.ts\" --fix",
     "lint:fix": "eslint --fix",
     "lint:staged": "lint-staged",
@@ -23,7 +25,8 @@
     "db:comments:generate": "tsx scripts/db-comments.ts",
     "db:comments:check": "tsx scripts/db-comments.ts --check",
     "db:migrate": "drizzle-kit migrate --config=drizzle.config.ts",
-    "db:seed:demo": "tsx --env-file=.env db/seed/command.ts"
+    "db:seed:demo": "tsx --env-file=.env db/seed/command.ts",
+    "identity:hard-cut:check": "tsx scripts/check-identity-hard-cut.ts"
   },
   "dependencies": {
     "@alicloud/credentials": "^2.4.5",

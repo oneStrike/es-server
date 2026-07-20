@@ -76,7 +76,7 @@ import { AuditModule } from './modules/system/audit/audit.module'
     },
     {
       provide: APP_GUARD,
-      useClass: AdminUserStatusGuard, // 管理端用户状态守卫
+      useExisting: AdminUserStatusGuard, // 管理端用户状态守卫
     },
     {
       provide: APP_GUARD,

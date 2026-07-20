@@ -208,32 +208,24 @@ export class SystemConfigService implements OnModuleInit {
     return true
   }
 
-  /**
-   * 递归过滤输入对象，只保留 DEFAULT_CONFIG 白名单中存在的字段。
-   * 这样即使前端绕过 DTO 传入额外节点，也不会写入持久化快照。
-   */
-  private filterAllowedFields<T>(
-    input: T,
+  // 按 DEFAULT_CONFIG 递归过滤输入，只允许白名单字段进入持久化快照。
+  private filterAllowedFields(
+    input: unknown,
     allowedFields: ConfigAllowedTemplate,
   ): Record<string, unknown> {
     if (!input || typeof input !== 'object') {
       return {}
     }
 
+    const inputRecord = this.asRecord(input)
     const result: Record<string, unknown> = {}
     for (const key of Object.keys(allowedFields)) {
-      if (key in input) {
-        if (
-          typeof allowedFields[key] === 'object' &&
-          allowedFields[key] !== null &&
-          !Array.isArray(allowedFields[key])
-        ) {
-          result[key] = this.filterAllowedFields(
-            input[key],
-            allowedFields[key] as ConfigAllowedTemplate,
-          )
+      if (key in inputRecord) {
+        const allowedValue = allowedFields[key]
+        if (this.isPlainObject(allowedValue)) {
+          result[key] = this.filterAllowedFields(inputRecord[key], allowedValue)
         } else {
-          result[key] = input[key]
+          result[key] = inputRecord[key]
         }
       }
     }
@@ -355,10 +347,7 @@ export class SystemConfigService implements OnModuleInit {
     return mergedConfig
   }
 
-  /**
-   * 复制一份配置快照并对敏感字段做脱敏展示。
-   * 仅管理端读取接口使用，不会回写缓存。
-   */
+  // 复制配置快照并脱敏敏感字段，仅供管理端读取展示，不回写缓存。
   private maskSensitiveSnapshot<T extends Record<string, unknown>>(config: T) {
     const maskedConfig = this.cloneConfig(config)
 
@@ -380,6 +369,7 @@ export class SystemConfigService implements OnModuleInit {
     return maskedConfig
   }
 
+  // 将系统配置快照按 DTO 契约补齐默认子节点后输出。
   private toSystemConfigDetailDto(
     config: Record<string, unknown>,
   ): SystemConfigDetailDto {
@@ -517,29 +507,24 @@ export class SystemConfigService implements OnModuleInit {
     return target
   }
 
-  /**
-   * 判断值是否为可递归处理的普通对象。
-   */
+  // 判断值是否为可递归处理的普通对象。
   private isPlainObject<T>(
     value: T,
   ): value is Extract<T, Record<string, unknown>> {
     return typeof value === 'object' && value !== null && !Array.isArray(value)
   }
 
+  // 将普通对象收敛为记录类型，非对象值按空配置节点处理。
   private asRecord(value: unknown): Record<string, unknown> {
     return this.isPlainObject(value) ? value : {}
   }
 
-  /**
-   * 通过 JSON 序列化复制配置对象，避免原地修改缓存快照。
-   */
+  // 通过 JSON 序列化复制配置对象，避免原地修改缓存快照。
   private cloneConfig<T>(config: T): T {
     return JSON.parse(JSON.stringify(config)) as T
   }
 
-  /**
-   * 递归移除对象中的 `null` 值，避免数据库里的空值覆盖默认配置。
-   */
+  // 递归移除对象中的 `null` 值，避免数据库空值覆盖默认配置。
   private removeNullValues<T>(value: T): T {
     if (Array.isArray(value)) {
       return value.map((item: unknown) => this.removeNullValues(item)) as T
@@ -625,10 +610,7 @@ export class SystemConfigService implements OnModuleInit {
     return baseTTL + Math.floor(Math.random() * (2 * offset + 1)) - offset
   }
 
-  /**
-   * 保存前校验上传配置的 provider 与子配置是否一致。
-   * 本轮只做静态字段完整性校验，不做网络探测。
-   */
+  // 保存前校验上传 provider 与子配置一致性，只做静态字段完整性检查。
   private validateUploadConfig<T>(uploadConfig: T) {
     if (!this.isPlainObject(uploadConfig)) {
       return
@@ -654,9 +636,7 @@ export class SystemConfigService implements OnModuleInit {
     }
   }
 
-  /**
-   * 断言对象上的必填字符串字段全部存在且非空。
-   */
+  // 断言对象上的必填字符串字段全部存在且非空。
   private assertRequiredStringFields<T>(
     target: T,
     requiredFields: string[],

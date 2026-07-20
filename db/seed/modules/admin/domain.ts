@@ -1,6 +1,11 @@
 import type { Db } from '../../db-client'
-import { adminRole, adminUser, adminUserRole, adminUserToken } from '@db/schema'
-import { AdminSystemRoleCode } from '@libs/identity/admin-rbac.constant'
+import {
+  adminRole,
+  AdminSystemRoleCode,
+  adminUser,
+  adminUserRole,
+  adminUserToken,
+} from '@db/schema'
 import { TokenTypeEnum } from '@libs/platform/modules/auth/types'
 import { eq } from 'drizzle-orm'
 import {

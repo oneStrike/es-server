@@ -28,7 +28,6 @@
       "@libs/message/*": ["./libs/message/src/*"],
       "@libs/observability/*": ["./libs/observability/src/*"],
       "@libs/user/*": ["./libs/user/src/*"],
-      "@libs/identity/*": ["./libs/identity/src/*"],
       "@libs/workflow/*": ["./libs/workflow/src/*"]
     },
     "resolveJsonModule": true,
@@ -36,14 +35,14 @@
     "strictBindCallApply": false,
     "strictNullChecks": true,
     "noFallthroughCasesInSwitch": false,
-    "noImplicitAny": false,
+    "noImplicitAny": true,
     "declaration": false,
     "outDir": "./dist",
     "removeComments": true,
     "sourceMap": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": false,
+    "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true
   },
   "include": [

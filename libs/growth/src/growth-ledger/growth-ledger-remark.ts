@@ -1,13 +1,23 @@
+import type { GrowthRuleTypeEnum } from '../growth-rule.constant'
 import type {
   ResolveGrowthLedgerRemarkInput,
   ResolveStoredGrowthLedgerRemarkInput,
 } from './growth-ledger-remark.type'
 import { EVENT_DEFINITION_MAP } from '../event-definition/event-definition.map'
+import { GROWTH_RULE_TYPE_VALUES } from '../growth-rule.constant'
 import {
   GrowthAssetTypeEnum,
   GrowthLedgerActionEnum,
   GrowthLedgerSourceEnum,
 } from './growth-ledger.constant'
+
+const GROWTH_RULE_TYPE_VALUE_SET: ReadonlySet<number> = new Set(
+  GROWTH_RULE_TYPE_VALUES,
+)
+
+function isGrowthRuleType(code: number): code is GrowthRuleTypeEnum {
+  return GROWTH_RULE_TYPE_VALUE_SET.has(code)
+}
 
 /**
  * 按统一策略解析账本说明文案。
@@ -17,11 +27,9 @@ import {
 export function resolveGrowthLedgerRemark(
   input: ResolveGrowthLedgerRemarkInput,
 ): string {
-  if (typeof input.ruleType === 'number') {
-    // eslint-disable-next-line ts/no-unsafe-assignment, ts/no-unsafe-member-access -- ESLint type checker cannot resolve Record<enum, T> indexed by number; tsc confirms type is EventDefinition
+  if (typeof input.ruleType === 'number' && isGrowthRuleType(input.ruleType)) {
     const ruleRemark = EVENT_DEFINITION_MAP[input.ruleType]?.ledgerRemark
     if (ruleRemark) {
-      // eslint-disable-next-line ts/no-unsafe-return -- same false positive as above
       return ruleRemark
     }
   }
@@ -100,10 +108,7 @@ function buildBracketedAssetRemark(
   return `${prefix}（${resolveGrowthLedgerAssetLabel(assetType)}）`
 }
 
-function buildActionAssetRemark(
-  verb: string,
-  assetType: GrowthAssetTypeEnum,
-) {
+function buildActionAssetRemark(verb: string, assetType: GrowthAssetTypeEnum) {
   return `${verb}${resolveGrowthLedgerAssetLabel(assetType)}`
 }
 

@@ -1,10 +1,5 @@
 /**
  * 认证通用常量
- * 覆盖令牌注销原因与错误文案
- */
-
-/**
- * 认证通用常量
  */
 export const AuthConstants = {
   /** 最大登录失败尝试次数 */
@@ -22,6 +17,9 @@ export const AuthDefaultValue = {
   /** 未知 IP 标识 */
   IP_ADDRESS_UNKNOWN: 'unknown',
 }
+
+/** token 存储服务的唯一 DI token，由各 app composition root 绑定具体实现。 */
+export const TOKEN_STORAGE_SERVICE = Symbol('TOKEN_STORAGE_SERVICE')
 
 /**
  * 令牌注销原因枚举

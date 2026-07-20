@@ -5,13 +5,13 @@
 ## TL;DR
 
 - 何时看：改 DTO、返回结构、字段复用、nullable 字段、`validation: false` 时先看本篇。
-- 必做：业务 DTO 默认定义在 `libs/*`；优先用组合工具复用字段；输出 nullable 字段写成 `: T | null`；输入边界明确拒绝 unknown field。
-- 不要：在 `apps/*` 新增同构 DTO，不要在 DTO 文件导入 `*.type.ts`，不要手写重复字段，不要保留旧字段 alias、静默 strip 或转换映射。
+- 必做：共享业务 DTO 定义在真实 owner；app-exclusive 或 consumer-owned DTO 可贴近对应 `apps/*` feature；优先用组合工具复用字段；输出 nullable 字段写成 `: T | null`；输入边界明确拒绝 unknown field。
+- 不要：把 app-only DTO 提升到 `libs/*`，不要在 `apps/*` 新增同构共享 DTO，不要在 DTO 文件导入 `*.type.ts`，不要手写重复字段，不要保留旧字段 alias、静默 strip 或转换映射。
 - 最低验证：`pnpm type-check`、目标 unit/HTTP e2e 与 OpenAPI check。
 
 ## 默认动作
 
-- 业务场景 DTO 统一定义在 `libs/*`；`apps/*` 只消费 DTO，不新增 `*.dto.ts`。
+- 跨 app 或真实共享业务场景 DTO 定义在 `libs/*` owner；只服务单一 app 的纵向业务 DTO、admin/app 专属 auth DTO、RBAC runtime DTO 与 consumer-owned contract DTO 可以定义在对应 `apps/*` feature 内。
 - HTTP Controller 的入参必须使用 DTO；出参优先使用输出 DTO，但允许 `boolean`、`number`、`string` 等基础类型作为稳定 contract。
 - 非 HTTP 的内部领域结构统一放在 `*.type.ts`；需要按职责拆分时可放在 owner 模块的 `types/*.type.ts` 中，不要混进 DTO 文件。
 - DTO 中的定义必须直接服务 Swagger 文档、字段校验或对外 contract；如果一个结构既不服务文档，也不服务校验，就不要为了“统一都叫 DTO”硬造 DTO。
@@ -28,7 +28,7 @@
 - `libs/platform`：基础 DTO 复用层。
 - `libs/*`：owner 域 DTO 定义层，承载实体基类 DTO（`BaseXxxDto`）与场景 DTO。
 - `libs/*/*.type.ts`、`libs/*/**/types/*.type.ts`：仅承载非 HTTP 的内部领域结构。
-- `apps/*`：入口装配层，仅消费 DTO。
+- `apps/*`：入口装配层与 app-exclusive DTO owner；只被单一 app 暴露或消费的 transport / consumer contract 不需要提升到 `libs/*`。
 
 ## 命名约定
 
@@ -41,7 +41,7 @@
 
 - DTO 组合工具统一使用 `@nestjs/swagger` 的 `PickType`、`OmitType`、`PartialType`、`IntersectionType`。
 - 优先用组合工具复用字段，避免字段复制、重复定义。
-- 跨模块复用 DTO 时，先导入目标 DTO，再做字段裁剪或合并；禁止重复定义其他模块已存在的字段。
+- 跨模块复用共享 DTO 时，先导入目标 DTO，再做字段裁剪或合并；禁止重复定义其他模块已存在的共享字段。若边界是不同 consumer 的独立 contract，可以在 consumer owner 内声明自身所需字段，但不得把它包装成共享 DTO 或 compat alias。
 - 同一 owner 模块内，若某个字段语义已经在 `BaseXxxDto`、同域基础 DTO 或同域稳定场景 DTO 中定义过，后续 DTO 必须优先复用。
 - `QueryXxxDto` 和筛选字段块 DTO 也不例外；不要在另一个 DTO 文件里把同义字段重新手写一遍。
 - DTO 文件禁止引入 `*.type.ts`；内部类型应反向复用 DTO 或 Drizzle，不允许 DTO 反向依赖 type。
@@ -50,7 +50,7 @@
 - `PartialType` 仅用于现有字段集的“整体可选化”；优先写成 `PartialType(CreateXxxDto)` 或 `PartialType(PickType(...))`，不要重新手写一份“几乎一样但全可选”的 DTO。
 - `FieldsDto` / `WritableFieldsDto` 只用于同域内可复用字段块；若字段块只服务单一场景且不会复用，直接放在对应场景 DTO 附近。
 - DTO 字段装饰器中的短文本元信息（如 `description`、`example`、简单 `message`）默认就地内联；仅当文案需要跨文件共享、属于事实源长文本、或必须参与受控拼接时，才提取装饰器元信息常量。
-- 禁止新增 DTO barrel。
+- 禁止新增 DTO barrel、identity DTO umbrella、compat DTO alias 或仅为旧路径续命的 re-export。
 - 禁止为了缩短路径、绕过组合工具或“看起来更像返回体”而新增纯别名 DTO。
 - 平台通用 DTO（如 `IdDto`、`IdsDto`、`UserIdDto`、`PageDto`）只允许直接使用；禁止通过 `extends` 创建空心别名再改名。
 - 只有仍然服务接口文档、字段校验或稳定返回 contract 的语义型别名 DTO 才允许；该例外不适用于平台通用 DTO。
@@ -73,7 +73,7 @@
 
 ## 禁止项
 
-- 禁止在 `apps/*` 新增同构 DTO。
+- 禁止在 `apps/*` 新增同构共享 DTO；允许 app-exclusive 或 consumer-owned DTO 贴近对应 app feature。
 - 禁止在 DTO 文件中引入 `*.type.ts`。
 - 禁止在 DTO 文件中承载 service 调用、数据库访问或业务计算逻辑。
 - 禁止在 DTO 文件中新增“字段完全复制但只改类名”的跨模块 DTO。
@@ -86,6 +86,7 @@
 - 禁止通过 `*.public.dto.ts`、`response.dto.ts`、`detail.dto.ts` 拆出仅做转发的文件；若属于同一 owner 域，优先收口在同一个 owner DTO 文件中。
 - 禁止违反 nullable 字段规则（见“默认动作”）：输出 DTO 中 nullable 字段必须使用 `: T | null`，Service 层必须使用 `?? null`。
 - 禁止为已删除字段、旧枚举或旧输入形状保留 `@Transform`、alias property、deprecated DTO、silent strip 或双 contract。
+- 禁止为 `libs/identity` 或替代 umbrella 保留 DTO re-export、兼容别名或双 owner。
 
 ## 枚举字段描述规范
 

@@ -1,4 +1,12 @@
-import { AdminUserManagementService } from '@libs/identity/admin-user-management.service'
+import { AuditActionTypeEnum } from '@libs/observability/audit/audit-action.constant'
+import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
+
+import { IdDto } from '@libs/platform/dto'
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { ApiTags } from '@nestjs/swagger'
+import { AdminPermission } from '../../common/decorators/admin-permission.decorator'
+import { ApiAuditDoc } from '../../common/decorators/api-audit-doc.decorator'
+import { AdminUserManagementService } from './admin-user-management.service'
 import {
   AdminAccountUpdateDto,
   AdminCurrentUserDto,
@@ -9,15 +17,7 @@ import {
   ResetAdminUserPasswordResultDto,
   UserPageDto,
   UserRegisterDto,
-} from '@libs/identity/dto/admin-user.dto'
-import { AuditActionTypeEnum } from '@libs/observability/audit/audit-action.constant'
-
-import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
-import { IdDto } from '@libs/platform/dto'
-import { Body, Controller, Get, Post, Query } from '@nestjs/common'
-import { ApiTags } from '@nestjs/swagger'
-import { AdminPermission } from '../../common/decorators/admin-permission.decorator'
-import { ApiAuditDoc } from '../../common/decorators/api-audit-doc.decorator'
+} from './dto/admin-user.dto'
 
 /**
  * 管理端用户控制器。

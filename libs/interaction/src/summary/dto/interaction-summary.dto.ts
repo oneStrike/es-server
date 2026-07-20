@@ -1,4 +1,3 @@
-import { BaseAdminUserDto } from '@libs/identity/dto/admin-user.dto'
 import {
   AuditStatusEnum,
   CommentLevelEnum,
@@ -31,10 +30,25 @@ export class InteractionAppUserSummaryDto extends PickType(BaseAppUserDto, [
 /**
  * 管理/审核参与人展示摘要 DTO。
  */
-export class InteractionActorSummaryDto extends PickType(BaseAdminUserDto, [
-  'id',
-  'username',
-] as const) {
+export class InteractionActorSummaryDto {
+  @NumberProperty({
+    description: '管理员用户 ID',
+    example: 1,
+    required: true,
+    min: 1,
+    validation: false,
+  })
+  id!: number
+
+  @StringProperty({
+    description: '管理员账号',
+    example: 'admin',
+    required: true,
+    validation: false,
+    maxLength: 20,
+  })
+  username!: string
+
   @StringProperty({
     description: '头像',
     example: 'https://example.com/avatar.png',

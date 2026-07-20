@@ -6,7 +6,12 @@ import * as $OpenApi from '@alicloud/openapi-client'
 import * as $Util from '@alicloud/tea-util'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
-import { Inject, Injectable, InternalServerErrorException, Logger } from '@nestjs/common'
+import {
+  Inject,
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common'
 import { maskString } from '../../utils/mask'
 import { CheckVerifyCodeDto, SendVerifyCodeDto } from './dto/sms.dto'
 import {
@@ -158,8 +163,7 @@ export class SmsService {
       if (!response.code || response.code !== 'OK') {
         throw new BusinessException(
           BusinessErrorCode.OPERATION_NOT_ALLOWED,
-          // eslint-disable-next-line ts/no-unsafe-argument -- SmsErrorMap 索引返回 string | undefined，tsc 确认类型安全
-          SmsErrorMap[response?.code || '验证码服务异常'],
+          this.resolveSmsErrorMessage(response.code),
         )
       }
 
@@ -169,6 +173,21 @@ export class SmsService {
     } catch (error) {
       this.logger.error(`验证码发送失败 - 手机号: ${maskedPhone}`, error)
       return false
+    }
+  }
+
+  // 将阿里云短信错误码映射为对客户端稳定展示的业务提示。
+  private resolveSmsErrorMessage(code: string | undefined): string {
+    if (code === undefined) {
+      return '验证码服务异常'
+    }
+
+    switch (code) {
+      case 'biz.FREQUENCY':
+      case 'isv.ValidateFail':
+        return SmsErrorMap[code]
+      default:
+        return '验证码服务异常'
     }
   }
 }

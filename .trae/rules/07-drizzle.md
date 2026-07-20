@@ -50,8 +50,9 @@
 
 ## 查询与写路径
 
-- `apps/*` 只做 transport/composition：不得直接 import `@db/core`、`@db/schema`、`DrizzleService`、`DbExecutor` 或 `DbTransaction`，也不得直接持有表。所有读写由对应 `libs/*` domain owner service 完成。
-- domain owner service 直接注入 `DrizzleService` 并显式表达查询、写入、锁与事务语义；不得用 adapter 或 forwarding service 保留 app 旧调用面。
+- `apps/*` 可以拥有只服务本 app 的纵向 DB provider / persistence adapter；这类 owner module 必须显式 import `DrizzleModule`，通过 `DrizzleService` 使用数据库能力，并只经受控 `@db/core` / `@db/schema` public API 取用类型、表和基础能力。
+- 非 app-exclusive 的读写由对应 `libs/*` domain owner service 完成；不得用 adapter 或 forwarding service 保留 app 旧调用面。
+- `db/schema/admin/*` 与 `db/schema/user/*` 分别拥有 admin / user schema source；`db/relations/admin.ts` 与 `db/relations/user.ts` 分别拥有 relation source。拆分 owner 时必须保持物理 SQL 表名、列、导出符号、relation root key 与 relation edge 稳定。
 - `count`、余额、库存、计数器、乐观锁版本号等增减，必须使用原子更新并与事实写入位于同一事务。
 - 0 行 update / delete 若业务语义是“目标不存在”，通过 `assertAffectedRows(...)` 或 `withErrorHandling(..., { notFound: ... })` 收口。
 - 分页结果组装只允许复用薄的 `toPageResult(...)`。
@@ -67,7 +68,7 @@
 
 ## Schema 与 migration 联动
 
-- 常规 schema 差异必须先生成 migration，再通过受控 check / migrate 入口执行；具体命令见 [07-drizzle-operations.md](./07-drizzle-operations.md)。`db:migrate` 直接使用 `drizzle.migrate.config.ts`，要求 `DATABASE_URL`，不存在 mode、目标别名或 production alias。
+- 常规 schema 差异必须先生成 migration，再通过受控 check / migrate 入口执行；具体命令见 [07-drizzle-operations.md](./07-drizzle-operations.md)。`db:migrate` 直接使用 `drizzle.config.ts`，要求 `DATABASE_URL`，不存在 mode、目标别名或 production alias。
 - 若生成过程中出现交互，必须停止并由用户亲自执行；不要替用户继续回答交互提示。
 - 当前 initial migration 由已授权的 history reset 建立；此例外不提供可复用 reset 命令、旧 journal 解释或兼容路径。initial migration 提交后，常规 migration 严格 append-only：只允许新增直接 sibling migration directory，不允许修改、删除、移动或向已存在 migration 文件追加 DDL。
 - 无法自动生成的 DDL 可手写补充，但必须说明原因、范围与风险。
@@ -99,8 +100,9 @@
 ## 禁止项
 
 - 禁止在业务层直接 new Drizzle 或绕开 `DrizzleService` 访问数据库。
-- 禁止 `apps/*` 直接 import 任意 `@db/*` 入口或数据库类型；禁止业务代码 import `@db/core/*`、`@db/schema/*`、`@db/relations` 或相对 DB 内部路径。
+- 禁止 `apps/*` 直接 import `@db/relations` 或相对 DB 内部路径；除本 app 明确拥有的纵向 DB provider / persistence adapter 外，禁止 app transport/controller 直接 import 任意 `@db/*` 入口、数据库类型或持有表。业务代码禁止 import `@db/core/*`、`@db/schema/*`、`@db/relations` 或相对 DB 内部路径，必须使用受控 public API。
 - 禁止新增或保留 `Repository`、`DAO`、`TableManager`、通用 CRUD/persistence 层；业务 owner service 才是查询与事务语义 owner。
+- 禁止以 `identity`、替代 umbrella、compat adapter、alias re-export 或通用 DB helper 形式保留旧 schema/relation/token-storage 所有权。
 - 禁止将 `DrizzleModule` 标记为 `@Global()`，也不得通过 `PlatformModule` 或其他 facade 重新隐式提供数据库能力。
 - 禁止重新引入 RQB v1 callback/filter shape、`schema:` 初始化、局部 relations 聚合、旧 Drizzle extension/shim，或为迁移期保留任何 ORM API fallback。
 - 禁止隐式事务；事务上下文必须显式透传。

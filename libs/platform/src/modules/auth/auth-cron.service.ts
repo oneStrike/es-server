@@ -1,6 +1,7 @@
 import type { ITokenStorageService } from './auth.type'
 import { Inject, Injectable, Logger } from '@nestjs/common'
 import { Cron, CronExpression } from '@nestjs/schedule'
+import { TOKEN_STORAGE_SERVICE } from './auth.constant'
 
 /**
  * 认证模块定时任务服务
@@ -11,7 +12,7 @@ export class AuthCronService {
   private readonly logger = new Logger(AuthCronService.name)
 
   constructor(
-    @Inject('ITokenStorageService')
+    @Inject(TOKEN_STORAGE_SERVICE)
     private readonly tokenStorageService: ITokenStorageService,
   ) {}
 

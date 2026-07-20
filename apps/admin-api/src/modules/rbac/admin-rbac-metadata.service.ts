@@ -1,7 +1,7 @@
-import type { AdminPermissionDefinition } from '@libs/identity/admin-rbac.type'
 import type { Type } from '@nestjs/common'
 import type { AdminPermissionMetadata } from '../../common/decorators/admin-permission.decorator'
 import type { AdminRbacHandler } from './admin-rbac-metadata.type'
+import type { AdminPermissionDefinition } from './admin-rbac.type'
 import { IS_PUBLIC_KEY } from '@libs/platform/decorators'
 import { Injectable } from '@nestjs/common'
 import { DiscoveryService, Reflector } from '@nestjs/core'

@@ -1,4 +1,11 @@
-import { AdminRbacService } from '@libs/identity/admin-rbac.service'
+import { AuditActionTypeEnum } from '@libs/observability/audit/audit-action.constant'
+import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
+import { IdDto, UpdateEnabledStatusDto } from '@libs/platform/dto'
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { ApiTags } from '@nestjs/swagger'
+import { AdminPermission } from '../../common/decorators/admin-permission.decorator'
+import { ApiAuditDoc } from '../../common/decorators/api-audit-doc.decorator'
+import { AdminRbacService } from './admin-rbac.service'
 import {
   AdminMenuCreateDto,
   AdminMenuDragReorderDto,
@@ -13,14 +20,7 @@ import {
   AdminRolePageDto,
   AdminRolePermissionBindDto,
   AdminRoleUpdateDto,
-} from '@libs/identity/dto/admin-rbac.dto'
-import { AuditActionTypeEnum } from '@libs/observability/audit/audit-action.constant'
-import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
-import { IdDto, UpdateEnabledStatusDto } from '@libs/platform/dto'
-import { Body, Controller, Get, Post, Query } from '@nestjs/common'
-import { ApiTags } from '@nestjs/swagger'
-import { AdminPermission } from '../../common/decorators/admin-permission.decorator'
-import { ApiAuditDoc } from '../../common/decorators/api-audit-doc.decorator'
+} from './dto/admin-rbac.dto'
 
 @ApiTags('系统管理/RBAC')
 @Controller('admin/rbac')
@@ -37,6 +37,7 @@ export class AdminRbacController {
     summary: '获取当前管理员菜单与权限',
     model: AdminRbacBootstrapDto,
   })
+  // 返回当前管理员可访问的菜单树和权限码集合。
   async bootstrap(@CurrentUser('sub') adminUserId: number) {
     return this.rbacService.getCurrentBootstrap(adminUserId)
   }
@@ -51,6 +52,7 @@ export class AdminRbacController {
     summary: '分页查询角色',
     model: AdminRoleDto,
   })
+  // 按后台角色管理权限分页查询角色。
   async pageRoles(@Query() query: AdminRolePageDto) {
     return this.rbacService.pageRoles(query)
   }
@@ -66,6 +68,7 @@ export class AdminRbacController {
     model: AdminRoleDto,
     isArray: true,
   })
+  // 查询可用于授权配置的角色列表。
   async listRoles() {
     return this.rbacService.listRoles()
   }
@@ -80,6 +83,7 @@ export class AdminRbacController {
     summary: '查询角色详情',
     model: AdminRoleDetailDto,
   })
+  // 查询指定角色的基础信息与已绑定权限、菜单。
   async roleDetail(@Query() query: IdDto) {
     return this.rbacService.getRoleDetail(query.id)
   }
@@ -95,6 +99,7 @@ export class AdminRbacController {
     model: Boolean,
     audit: { actionType: AuditActionTypeEnum.CREATE },
   })
+  // 在系统角色管理边界内创建后台角色。
   async createRole(@Body() body: AdminRoleCreateDto) {
     return this.rbacService.createRole(body)
   }
@@ -110,6 +115,7 @@ export class AdminRbacController {
     model: Boolean,
     audit: { actionType: AuditActionTypeEnum.UPDATE },
   })
+  // 更新指定后台角色的可维护基础信息。
   async updateRole(@Body() body: AdminRoleUpdateDto) {
     return this.rbacService.updateRole(body)
   }
@@ -125,6 +131,7 @@ export class AdminRbacController {
     model: Boolean,
     audit: { actionType: AuditActionTypeEnum.DELETE },
   })
+  // 删除指定非内置后台角色并清理其授权关系。
   async deleteRole(@Body() body: IdDto) {
     return this.rbacService.deleteRole(body.id)
   }
@@ -140,6 +147,7 @@ export class AdminRbacController {
     model: Boolean,
     audit: { actionType: AuditActionTypeEnum.UPDATE },
   })
+  // 启用或停用指定后台角色。
   async updateRoleStatus(@Body() body: UpdateEnabledStatusDto) {
     return this.rbacService.updateRoleStatus(body.id, body.isEnabled)
   }
@@ -155,6 +163,7 @@ export class AdminRbacController {
     model: Boolean,
     audit: { actionType: AuditActionTypeEnum.UPDATE },
   })
+  // 重置指定角色可使用的后台权限码集合。
   async bindRolePermissions(@Body() body: AdminRolePermissionBindDto) {
     return this.rbacService.bindRolePermissions(body)
   }
@@ -170,6 +179,7 @@ export class AdminRbacController {
     model: Boolean,
     audit: { actionType: AuditActionTypeEnum.UPDATE },
   })
+  // 重置指定角色可访问的后台菜单集合。
   async bindRoleMenus(@Body() body: AdminRoleMenuBindDto) {
     return this.rbacService.bindRoleMenus(body)
   }
@@ -185,6 +195,7 @@ export class AdminRbacController {
     model: AdminPermissionDto,
     isArray: true,
   })
+  // 查询后台已注册的权限清单供角色授权使用。
   async listPermissions() {
     return this.rbacService.listPermissions()
   }
@@ -200,6 +211,7 @@ export class AdminRbacController {
     model: AdminMenuDto,
     isArray: true,
   })
+  // 查询后台菜单树供菜单管理和授权配置使用。
   async menuTree() {
     return this.rbacService.menuTree()
   }
@@ -215,6 +227,7 @@ export class AdminRbacController {
     model: Boolean,
     audit: { actionType: AuditActionTypeEnum.CREATE },
   })
+  // 在系统菜单管理边界内创建后台菜单节点。
   async createMenu(@Body() body: AdminMenuCreateDto) {
     return this.rbacService.createMenu(body)
   }
@@ -230,6 +243,7 @@ export class AdminRbacController {
     model: Boolean,
     audit: { actionType: AuditActionTypeEnum.UPDATE },
   })
+  // 更新指定后台菜单节点的配置。
   async updateMenu(@Body() body: AdminMenuUpdateDto) {
     return this.rbacService.updateMenu(body)
   }
@@ -245,6 +259,7 @@ export class AdminRbacController {
     model: Boolean,
     audit: { actionType: AuditActionTypeEnum.DELETE },
   })
+  // 删除无子节点的后台菜单并清理角色菜单绑定。
   async deleteMenu(@Body() body: IdDto) {
     return this.rbacService.deleteMenu(body.id)
   }
@@ -260,6 +275,7 @@ export class AdminRbacController {
     model: Boolean,
     audit: { actionType: AuditActionTypeEnum.UPDATE },
   })
+  // 启用或停用指定后台菜单节点。
   async updateMenuStatus(@Body() body: UpdateEnabledStatusDto) {
     return this.rbacService.updateMenuStatus(body.id, body.isEnabled)
   }
@@ -275,6 +291,7 @@ export class AdminRbacController {
     model: Boolean,
     audit: { actionType: AuditActionTypeEnum.UPDATE },
   })
+  // 按拖拽结果调整后台菜单节点的父级与排序。
   async dragReorderMenu(@Body() body: AdminMenuDragReorderDto) {
     return this.rbacService.dragReorderMenu(body)
   }

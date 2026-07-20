@@ -8,11 +8,11 @@
 
 ## TypeScript / ESLint 基线差距
 
-- 当前状态：canonical strict/完整范围/`skipLibCheck: true` 合同已由 `pnpm type-check` 与 scope gate 激活，当前 854 个第一方使用点错误因此显式阻断；`no-unsafe-*` lint 严重级别仍待 Phase 1 收口。纪元起点源码按目标 strict 选项回放为 843 个第一方错误，两份会掩盖错误的 Fastify `.d.ts` shim 已删除。
+- 当前状态：canonical strict/完整范围/`skipLibCheck: true` 合同已由 `pnpm type-check` 激活，覆盖 `apps`、`libs`、`db`、`scripts`、`src` 与根级 TypeScript 源码；`noImplicitAny` 和 `forceConsistentCasingInFileNames` 已开启，当前第一方 TypeScript 使用点为 0 error。`no-unsafe-*` lint 严重级别仍待 Phase 1 收口。两份会掩盖错误的 Fastify `.d.ts` shim 已删除。
 - 关联规则：[04-typescript-types.md](./04-typescript-types.md)、[08-testing.md](./08-testing.md)。
-- 处理：新增/修改代码遵循严格目标；Phase 1 扩大 canonical `pnpm type-check` 并把第一方错误归零。canonical 配置固定 `skipLibCheck: true`，第三方 `.d.ts` 文件体内诊断非阻断；不得新增路径/文件/错误码 skip、永久 suppress 或窄 `include`。
+- 处理：新增/修改代码遵循严格目标；canonical 配置固定 `skipLibCheck: true`，第三方 `.d.ts` 文件体内诊断非阻断；不得新增路径/文件/错误码 skip、永久 suppress 或窄 `include`。
 - 禁止以关闭第三方声明诊断为由 patch 依赖、增加 shim、维护 fork、引入 compatibility 层或建立逐错误白名单；Drizzle RC4 + RQBv2 保持唯一 ORM 主路径。第一方使用点暴露的类型错误仍必须修复。
-- 关闭条件：第一方 `apps/libs/db/scripts/test/config/root-config` 的 strict tsc 为 0 error，canonical `skipLibCheck: true` 与 unsafe lint 全部生效；第三方包自身 `.d.ts` 诊断不属于关闭条件。
+- 关闭条件：unsafe lint 全部生效；第三方包自身 `.d.ts` 诊断不属于关闭条件。
 
 ## 测试工具链过渡差距
 

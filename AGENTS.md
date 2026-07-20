@@ -23,7 +23,8 @@
 ## 2. 项目级最小约束
 
 - 不要假设 README、脚本名、钩子或历史文档一定准确；发现文档与仓库现状冲突时，必须同步修正文档或代码，而不是沿用失真描述。
-- `apps/*` 是入口层；可复用的业务契约与领域逻辑默认落在 `libs/*`，数据库能力落在 `db/*`。
+- `apps/*` 是入口与 app-exclusive 纵向业务 owner；只被单一 app 使用的业务逻辑、DTO 与 DB provider 可以留在对应 app 内。`libs/*` 只承载跨 app 或真实共享领域，`db/*` 继续拥有 schema 与 relation 事实源。
+- 禁止保留或新增 `identity` 旧 umbrella、替代 umbrella、compat shim、alias re-export 或第二套兼容入口。
 - 影响路由、DTO、分页、错误语义、数据库字段、计数器或迁移策略的改动，必须先对齐 `.trae/rules/PROJECT_RULES.md` 对应规则。
 - 仓库不保留任何测试文件；开发中临时新增的 `*.spec.ts`、`*.test.ts`、`*.e2e.spec.ts`、探针脚本或测试目录必须在交付前删除，禁止提交或长期保留。
 - 导入路径遵循 `PROJECT_RULES.md`：业务域代码默认直连 owner 文件，不新增仅做转发的 barrel；`libs/platform` 可保留受控目录级 public API。

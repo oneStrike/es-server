@@ -1,11 +1,7 @@
 import type { FastifyRequest } from 'fastify'
-import {
-  LoginResponseDto,
-  UserLoginDto,
-} from '@libs/identity/dto/admin-auth.dto'
 import { AuditActionTypeEnum } from '@libs/observability/audit/audit-action.constant'
-
 import { ApiDoc, Public } from '@libs/platform/decorators'
+
 import {
   RefreshTokenDto,
   RsaPublicKeyDto,
@@ -19,6 +15,7 @@ import { ApiTags } from '@nestjs/swagger'
 import { AdminAuthOnly } from '../../common/decorators/admin-permission.decorator'
 import { Audit } from '../../common/decorators/audit.decorator'
 import { AuthService } from './auth.service'
+import { LoginResponseDto, UserLoginDto } from './dto/admin-auth.dto'
 
 /**
  * 管理端认证控制器

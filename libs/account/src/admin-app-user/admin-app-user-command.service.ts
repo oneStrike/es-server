@@ -7,16 +7,16 @@ import {
   tableIntegrityLock,
 } from '@db/core'
 import { AppUserGrowthProfileService } from '@libs/growth/app-user-growth-profile/app-user-growth-profile.service'
-import { allocateAppUserAccountInTx } from '@libs/identity/app-user-account'
-import { AppUserTokenStorageService } from '@libs/identity/token/app-user-token-storage.service'
 import { BusinessErrorCode, GenderEnum } from '@libs/platform/constant'
 
 import { BusinessException } from '@libs/platform/exceptions'
 import { RevokeTokenReasonEnum } from '@libs/platform/modules/auth/helpers'
 import { RsaService } from '@libs/platform/modules/crypto/rsa.service'
 import { ScryptService } from '@libs/platform/modules/crypto/scrypt.service'
+import { allocateAppUserAccountInTx } from '@libs/user/app-user-account'
 import { AppUserCountService } from '@libs/user/app-user-count.service'
 import { UserStatusEnum } from '@libs/user/app-user.constant'
+import { AppUserTokenStorageService } from '@libs/user/token/app-user-token-storage.service'
 import { UserService as UserCoreService } from '@libs/user/user.service'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, isNotNull, isNull } from 'drizzle-orm'
@@ -368,11 +368,8 @@ export class AdminAppUserCommandService extends AdminAppUserServiceSupport {
     return true
   }
 
-  /**
-   * app_user 是优惠券任务与关注目标的物理父表。子写入路径已按同一
-   * app_user/id record lock 加锁，因此状态变更必须先取得该精确 record lock，
-   * 再在同一事务内确认用户仍处于目标软删除状态。
-   */
+  // app_user 是优惠券任务与关注目标的物理父表，状态变更需先取得精确 record lock。
+  // 加锁后在同一事务内复查软删除状态，避免和子写入路径并发错位。
   private async lockAndRecheckAppUserReferenceState(
     tx: DbTransaction,
     userId: number,

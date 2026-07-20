@@ -1,5 +1,4 @@
 import type { CurrentUserRequest } from '@libs/platform/decorators'
-import { AdminUserIdentityService } from '@libs/identity/admin-user.service'
 import { IS_PUBLIC_KEY } from '@libs/platform/decorators'
 import { AuthErrorMessages } from '@libs/platform/modules/auth/helpers'
 import {
@@ -10,14 +9,16 @@ import {
   UnauthorizedException,
 } from '@nestjs/common'
 import { Reflector } from '@nestjs/core'
+import { AdminAuthAccountService } from './admin-auth-account.service'
 
 @Injectable()
 export class AdminUserStatusGuard implements CanActivate {
   constructor(
     private readonly reflector: Reflector,
-    private readonly adminUserIdentityService: AdminUserIdentityService,
+    private readonly adminAuthAccountService: AdminAuthAccountService,
   ) {}
 
+  // 对已认证管理员检查账号仍然存在且处于启用状态。
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
       context.getHandler(),
@@ -33,7 +34,7 @@ export class AdminUserStatusGuard implements CanActivate {
       return true
     }
 
-    const user = await this.adminUserIdentityService.findAdminUserStatus(userId)
+    const user = await this.adminAuthAccountService.findAdminUserStatus(userId)
 
     if (!user) {
       throw new UnauthorizedException(AuthErrorMessages.LOGIN_INVALID)

@@ -33,13 +33,22 @@
 pnpm exec eslint <changed-typescript-files>
 pnpm build:admin
 pnpm build:app
+pnpm identity:hard-cut:check
 pnpm db:migration:check
 pnpm db:comments:check
 ```
 
 只运行实际存在的命令。当前不存在 `pnpm check`、`pnpm lint:check`、
-`pnpm test:*`、`pnpm boundaries:check`；不得在文档或
-CI 中伪造它们。规则/文档变更至少运行对应 Markdown Prettier check 与 `pnpm type-check`。
+`pnpm test:*`、`pnpm boundaries:check`；不得在文档或 CI 中伪造它们。
+规则/文档变更至少运行对应 Markdown Prettier check 与 `pnpm type-check`。
+
+identity hard cut 当前真实窄静态 gate 是 `pnpm identity:hard-cut:check`，阻断
+`libs/identity`、
+`@libs/identity/*`、`IdentityModule`、替代 umbrella、compat shim、alias re-export、旧 token
+storage 继承 base、旧 schema/relation path 和 retained test/probe file。retained
+test/probe 扫描必须覆盖所有 commit candidate，并排除 `.git`、`.omx`、`dist` 与
+`node_modules`。该 gate 变更需要红绿验证脚本本身确实能因旧路径或 retained
+test/probe 回归而失败。
 
 ## 禁止项
 

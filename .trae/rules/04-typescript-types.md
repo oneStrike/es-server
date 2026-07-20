@@ -25,7 +25,9 @@
 - `*.type.ts`：单一 owner 域、单一主题的稳定类型文件，例如 `forum-topic.type.ts`、`task.type.ts`。
 - `types/*.type.ts`：当同一 owner 模块下存在多组职责明确的类型时，可建立专门 `types/` 目录按主题拆分，例如 `growth-reward/types/growth-reward-result.type.ts`、`growth-reward/types/growth-reward-settlement.type.ts`。
 - 同一 owner 模块一旦已经建立 `types/` 目录，后续新增或继续维护的 owner type 默认进入 `types/*.type.ts`；不要一边保留模块根下的 `xxx.type.ts`，一边继续把同域类型新增到 `types/`，形成双入口。
-- `apps/*` 可以定义入口层专属类型，例如装饰器 metadata、全局声明合并、框架适配参数；但不得重复声明 `libs/*` 已有的业务类型。
+- `apps/*` 可以定义入口层专属类型，以及只服务本 app 纵向业务的 consumer-owned 类型、auth/RBAC runtime 类型、provider adapter 参数和 token storage adapter 类型；但不得重复声明 `libs/*` 已有的共享业务类型。
+- `libs/platform` 只承载纯 auth/session contract、通用 token/session primitive 和业务无关基础设施类型；不得放置 app 专属 DTO、admin/app token storage 类型、RBAC runtime 类型或 DB-aware token adapter 类型。
+- `libs/*` 只承载跨 app 或真实共享领域类型；app-only 类型不得为了复用路径或旧 identity 形状提升到 `libs/*`。
 - 新增类型文件时，默认贴近 owner 模块放置；不要新增 `*.public.type.ts`、`common.type.ts`、`shared.type.ts` 这类语义泛化文件。
 - 禁止新增 `*.types.ts`；若历史上已存在，默认收敛到同域 `*.type.ts`。
 - 使用 `types/` 目录时，仍然必须直连具体 `*.type.ts` 文件；禁止新增 `types/index.ts`、`types.ts` 或目录级转发入口。
@@ -86,6 +88,7 @@
 - 禁止在 `*.type.ts` 之外的业务文件中声明顶层 `type` / `interface`；即使只在当前文件使用，也应放到贴近 owner 的 `*.type.ts`。
 - 禁止在方法 / 函数签名位置直接书写复杂类型表达式，例如 `payload: Pick<XxxSelect, ...>`、`params: { ... }`、`callback: (tx: Db) => Promise<T>`；应先提取为 `*.type.ts` 中的命名类型。
 - 禁止把仅当前文件内部使用的临时类型强行提升为跨域公共导出类型。
+- 禁止为 `libs/identity`、`@libs/identity/*` 或替代 identity umbrella 保留类型 alias、compat re-export、双 owner 或旧路径适配文件。
 - 禁止为 Drizzle `inferSelect` / `inferInsert` 再套一层无意义别名，例如 `type CheckInActivityStreak = typeof checkInActivityStreak.$inferSelect` 后再写 `type CheckInActivityStreakSelect = CheckInActivityStreak`。
 
 ## 正反例

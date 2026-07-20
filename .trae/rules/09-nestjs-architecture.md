@@ -23,7 +23,7 @@ apps/* 与 operational CLI composition
   → interaction
   → growth
   → moderation
-  → user/identity
+  → user
   → system-config
   → eventing/workflow
   → observability
@@ -35,13 +35,13 @@ apps/* 与 operational CLI composition
 
 - 箭头表示唯一允许的依赖方向：左侧可以依赖右侧，右侧不得反向导入左侧；不要求每个相邻节点直接依赖。
 - 数据库 operational composition 由 package scripts 调起的 Drizzle Kit config、`db/bootstrap/**`、`db/seed/**` 与 `scripts/**` 静态/RBAC 入口组成。它们与 `apps/*` 一样只能装配并向下依赖 runtime owner；任何业务 runtime package 都不得反向导入这些可执行入口。
-- package group 必须覆盖全部 runtime owner：`account/read-model` 对应 `libs/account`，`content/app-content` 对应 `libs/content` 与 `libs/app-content`，`commerce` 对应 `libs/commerce`，`moderation` 对应 `libs/moderation`（别名 `@libs/sensitive-word`），`system-config` 对应 `libs/config`，`user/identity` 对应 `libs/user` 与 `libs/identity`，`eventing/workflow` 对应 `libs/eventing` 与 `libs/workflow`，`observability` 对应 `libs/observability`。不得把这些 DB owner 留在 `libs/platform`。
+- package group 必须覆盖全部 runtime owner：`account/read-model` 对应 `libs/account`，`content/app-content` 对应 `libs/content` 与 `libs/app-content`，`commerce` 对应 `libs/commerce`，`moderation` 对应 `libs/moderation`（别名 `@libs/sensitive-word`），`system-config` 对应 `libs/config`，`user` 对应 `libs/user`，`eventing/workflow` 对应 `libs/eventing` 与 `libs/workflow`，`observability` 对应 `libs/observability`。不得把这些 DB owner 留在 `libs/platform`，也不得恢复 `libs/identity` 或替代 identity umbrella。
 - `db/core → db/relations → db/schema` 是数据库内部的唯一运行方向；业务代码只通过受控 `@db/core` / `@db/schema` public API 使用数据库能力，不把 `@db/relations` 暴露为业务入口。
 - 新增顶层 `apps/*`、`libs/*` 或 `db/*` runtime package 前，必须先把它登记到上述唯一顺序及 machine-readable boundary 配置；未映射 package 直接使边界门禁失败，不允许默认放行。
 - runtime package graph、Nest imports graph 与文件级 runtime import graph 都必须无 SCC。
-- `apps/*` 只负责 composition、transport、启动与 adapter 绑定，不承载可复用领域逻辑。
-- `apps/*` 不直接注入 `DrizzleService`、持有 schema table 或 import 任意 `@db/*`；它们只调用显式导入的 domain owner provider。
-- `account/read-model` 是复杂用户聚合读模型的唯一 owner；不得把聚合查询回塞 `user/identity` 或建成业务 global。
+- `apps/*` 负责 composition、transport、启动、adapter 绑定，以及只服务本 app 的纵向业务 owner；app-exclusive service、DTO、RBAC runtime、auth runtime 与 DB provider 可以贴近对应 app feature。
+- `apps/*` 的 transport/controller 不直接注入 `DrizzleService`、持有 schema table 或 import 任意 `@db/*`；只有本 app 明确拥有的纵向 DB provider / persistence adapter 可以显式 import `DrizzleModule` 并通过受控 `@db/core` / `@db/schema` public API 使用数据库能力。
+- `account/read-model` 是复杂用户聚合读模型的唯一 owner；不得把聚合查询回塞 `user` 或建成业务 global。
 - `libs/platform` 不依赖 `db/core`；数据库健康检查归 DB adapter 或 app composition。
 - `forwardRef()`、调整导出顺序或动态 service lookup 不得用于掩盖反向边；必须删除导致环的依赖。
 
@@ -55,12 +55,14 @@ apps/* 与 operational CLI composition
 - 禁止 `ModuleRef.get(..., { strict: false })`、字符串 service locator、容器全局查找或运行期补依赖。
 - feature module 只导出其稳定 public provider，不得聚合导出其他业务模块形成隐式依赖面。
 - config factory 必须在 bootstrap/register factory 执行时读取最终环境值，经校验后以强类型 provider 注入；禁止模块加载前捕获环境变量。
+- 禁止 `IdentityModule`、`IdentityTokenStorageModule`、`@libs/identity/*`、字符串 service locator、替代 identity umbrella、compat shim 或 alias re-export 作为 provider graph 过渡方案。
 
 ## 跨域同步 port
 
 - 只有真实跨域同步能力或外部 SDK 边界才建立 port；普通 owner 查询不得泛化成 repository/port。
 - port 由 consumer 定义并拥有，接口只表达 consumer 所需最小能力；实现 adapter 在 app composition 绑定。
 - feature owner 可以在自己的 query/service 中直接使用注入的 `DrizzleService`，禁止建立中央万能 repository、manager 或 integration package。
+- app-exclusive vertical owner 也可以在自己的 provider/adapter 中直接使用注入的 `DrizzleService`，但查询细节必须留在该 owner 内，不得上升为 `db/core` 通用 helper、platform DB-aware base 或替代 umbrella。
 - 调用链已有事务时，transaction context 必须作为显式参数沿 port 传播；adapter 不得隐藏开启第二个事务，也不得把数据库 transaction 跨异步事件边界传递。
 - 一个 use case 只有一个 transaction owner；事实写入、计数器与 outbox 必须位于同一 owner transaction。
 
@@ -88,7 +90,7 @@ apps/* 与 operational CLI composition
 
 ## 架构约束
 
-- 仓库必须维持唯一 package 顺序、0 runtime SCC、0 business global、0 `forwardRef()`、0 `ModuleRef` / `strict:false`、0 forbidden barrel 与 0 重复 provider。从每个 `apps/*/src/app.module.ts` 组合根展开真实 Nest module import 闭包时：仓库自有 `DynamicModule` 静态工厂的 `module`、`imports`、`providers`、`exports` 与传入 options 必须可静态解释；无法解释的动态结构直接失败。闭包内必须同时为 0 module import SCC、0 裸导入 provider-owning dynamic module、0 同 token/provider 重复注册；合法的已导入 module re-export 不计作新注册。涉及 DB 领域边界时，必须保证 0 app direct DB import、0 DB internal-path import、0 generic persistence filename、0 legacy schema/relation path、0 `DrizzleModule @Global()` 与 0 public relation registry export。
+- 仓库必须维持唯一 package 顺序、0 runtime SCC、0 business global、0 `forwardRef()`、0 `ModuleRef` / `strict:false`、0 forbidden barrel 与 0 重复 provider。从每个 `apps/*/src/app.module.ts` 组合根展开真实 Nest module import 闭包时：仓库自有 `DynamicModule` 静态工厂的 `module`、`imports`、`providers`、`exports` 与传入 options 必须可静态解释；无法解释的动态结构直接失败。闭包内必须同时为 0 module import SCC、0 裸导入 provider-owning dynamic module、0 同 token/provider 重复注册；合法的已导入 module re-export 不计作新注册。涉及 DB 领域边界时，必须保证 0 非 owner app direct DB import、0 DB internal-path import、0 generic persistence filename、0 legacy schema/relation path、0 identity umbrella/compat alias、0 `DrizzleModule @Global()` 与 0 public relation registry export。
 - 每个 feature module 必须有可重复的 module compilation proof，证明 imports/exports 与 provider token 完整且唯一；按 `AGENTS.md`，临时测试代码在验证后删除。
 - HTTP/WS composition 必须有协议级 proof；跨 port 事务必须有提交、回滚与失败分支验证；event/outbox 必须有幂等与投递失败验证。仓库中不得遗留 test 文件或临时 probe。
 - 任何例外必须先修改本篇或 `AI_EXCEPTIONS.md`，写明 owner、理由、验证与到期条件；实现中的局部注释不能替代规则决策。
