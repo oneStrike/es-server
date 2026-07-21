@@ -750,7 +750,7 @@ const USER_PROFILE_FIXTURES = [
   },
 ] as const
 
-const SEED_USER_COUNT = 96
+const SEED_USER_COUNT = 150
 
 const GENERATED_PROFILE_PREFIXES = [
   '夜雨',
