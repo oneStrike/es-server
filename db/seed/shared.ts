@@ -24,6 +24,16 @@ const SEED_READER_ACCOUNT_BASE_PREFIXES = [
   'natsu',
   'shiro',
   'kuro',
+  'hatsu',
+  'rin',
+  'tsubaki',
+  'kanade',
+  'miyu',
+  'sayaka',
+  'tooru',
+  'yuki',
+  'nana',
+  'saki',
 ] as const
 
 const SEED_READER_ACCOUNT_BASE_SUFFIXES = [
@@ -47,7 +57,7 @@ export const SEED_READER_ACCOUNT_SLUGS = [
     (account) =>
       !['tsukimi-komin', 'ache-noknife', 'dango-archive'].includes(account),
   ),
-].slice(0, 96)
+].slice(0, 150)
 
 const SEED_PASSWORD_SALT = 'seed-password-salt-v1'
 const scryptService = new ScryptService()
@@ -79,10 +89,10 @@ export const SEED_ACCOUNTS = {
 } as const
 
 export const SEED_TIMELINE = {
-  seedAt: new Date('2026-03-20T08:00:00.000Z'),
-  previousDay: new Date('2026-03-19T08:00:00.000Z'),
-  releaseDay: new Date('2026-03-01T08:00:00.000Z'),
-  chatBucket: new Date('2026-03-20T08:30:00.000Z'),
+  seedAt: new Date('2026-07-21T08:00:00.000Z'),
+  previousDay: new Date('2026-07-20T08:00:00.000Z'),
+  releaseDay: new Date('2026-04-21T08:00:00.000Z'),
+  chatBucket: new Date('2026-07-21T08:30:00.000Z'),
 } as const
 
 export const DICTIONARY_CODES = {
@@ -98,6 +108,7 @@ export const DICTIONARY_ITEMS = {
     zh: 'zh',
     ja: 'ja',
     en: 'en',
+    ko: 'ko',
   },
   nationality: {
     cn: 'CN',
@@ -114,6 +125,8 @@ export const DICTIONARY_ITEMS = {
     shueisha: 'shueisha',
     kadokawa: 'kadokawa',
     shinchosha: 'shinchosha',
+    squareEnix: 'square_enix',
+    shogakukan: 'shogakukan',
   },
   workAgeRating: {
     all: 'ALL',
