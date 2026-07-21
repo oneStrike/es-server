@@ -22,15 +22,20 @@ import { createDbClient, disconnectDbClient } from './db-client'
 import { assertSafeDemoSeedEnvironment } from './environment-guard'
 import { acquirePublicSchemaMaintenanceTableLocks } from './maintenance-table-lock'
 import { seedAdminDomain } from './modules/admin/domain'
-import { seedAppCoreDomain } from './modules/app/domain'
+import {
+  seedAppActivityDomain,
+  seedAppCoreDomain,
+} from './modules/app/domain'
 import {
   seedForumActivityDomain,
   seedForumReferenceDomain,
 } from './modules/forum/domain'
+import { seedMessageDomain } from './modules/message/domain'
 import {
   seedSystemOperationalData,
   seedSystemReferenceData,
 } from './modules/system/domain'
+import { seedWorkDomain } from './modules/work/domain'
 
 const DATABASE_INITIALIZATION_JOB_LOCK = 'demo-seed'
 
@@ -69,16 +74,19 @@ export async function runDemoSeed(options: DemoSeedRunOptions) {
       await seedSystemReferenceData(tx)
       await seedAdminDomain(tx)
       await seedAppCoreDomain(tx)
+      await seedWorkDomain(tx)
       await seedForumReferenceDomain(tx)
       console.log('\n✅ 全局参考数据初始化完成\n')
 
       console.log('📦 第二阶段：论坛主体与互动数据\n')
       await seedForumActivityDomain(tx)
+      await seedAppActivityDomain(tx)
       console.log('\n✅ 论坛主体与互动数据初始化完成\n')
 
-      console.log('📦 第三阶段：系统运行数据\n')
+      console.log('📦 第三阶段：消息与系统运行数据\n')
+      await seedMessageDomain(tx)
       await seedSystemOperationalData(tx)
-      console.log('\n✅ 系统运行数据初始化完成\n')
+      console.log('\n✅ 消息与系统运行数据初始化完成\n')
     })
 
     console.log('🎉 所有 Drizzle 种子数据初始化完成！')
