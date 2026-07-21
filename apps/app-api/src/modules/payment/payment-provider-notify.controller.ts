@@ -1,5 +1,6 @@
-import type { FastifyReply, FastifyRequest } from 'fastify'
 import type { ProviderPaymentNotifyParamsDto } from '@libs/interaction/payment/dto/payment.dto'
+import type { RawBodyRequest } from '@nestjs/common'
+import type { FastifyReply, FastifyRequest } from 'fastify'
 import { PaymentNotifyService } from '@libs/interaction/payment/payment-notify.service'
 import {
   PaymentChannelEnum,
@@ -8,7 +9,6 @@ import {
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { Public } from '@libs/platform/decorators'
 import { BusinessException } from '@libs/platform/exceptions'
-import type { RawBodyRequest } from '@nestjs/common'
 import {
   Body,
   Controller,

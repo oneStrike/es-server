@@ -189,11 +189,11 @@ export class AdminAppUserQueryService extends AdminAppUserServiceSupport {
         : [],
     ])
     const levelMap = new Map(
-      // eslint-disable-next-line ts/no-unsafe-member-access -- Drizzle 联合查询推导为 unknown，tsc 确认类型安全
+
       levelRows.map((item) => [item.id, item.name] as const),
     )
     const countMap = new Map(
-      // eslint-disable-next-line ts/no-unsafe-member-access -- Drizzle 联合查询推导为 unknown，tsc 确认类型安全
+
       countRows.map((item) => [item.userId, item] as const),
     )
     const growthMap =
@@ -206,9 +206,9 @@ export class AdminAppUserQueryService extends AdminAppUserServiceSupport {
       list: page.list.map((item) => ({
         ...this.userCoreService.mapBaseUser(item, growthMap.get(item.id)),
         deletedAt: item.deletedAt ?? null,
-        // eslint-disable-next-line ts/no-unsafe-assignment -- Map 值类型推导为 unknown，tsc 确认类型安全
+
         levelName: item.levelId ? (levelMap.get(item.levelId) ?? null) : null,
-        // eslint-disable-next-line ts/no-unsafe-argument -- Map 值类型推导为 unknown，tsc 确认类型安全
+
         counts: this.mapAdminAppUserCounts(countMap.get(item.id)),
       })),
     }

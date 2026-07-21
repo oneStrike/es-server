@@ -367,7 +367,7 @@ export class MessageChatInvestigationService {
       if (direction !== 'asc' && direction !== 'desc') {
         throw new BadRequestException(`排序字段 "${field}" 的排序方向无效`)
       }
-      return { [field]: direction } as Record<string, 'asc' | 'desc'>
+      return { [field]: direction }
     })
   }
 
