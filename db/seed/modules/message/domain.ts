@@ -149,6 +149,46 @@ export async function seedMessageDomain(db: Db) {
       status: 1,
       createdAt: addMinutes(SEED_TIMELINE.seedAt, -10),
     },
+    {
+      messageSeq: 4n,
+      senderId: userA.id,
+      clientMessageId: 'seed-chat-4',
+      messageType: 1,
+      content: '咒术回战最近的话数作画也太稳了，感觉要追上去。',
+      payload: null,
+      status: 1,
+      createdAt: addMinutes(SEED_TIMELINE.seedAt, -8),
+    },
+    {
+      messageSeq: 5n,
+      senderId: userB.id,
+      clientMessageId: 'seed-chat-5',
+      messageType: 1,
+      content: '同感！藤本树的链锯人第二季也快了吧，期待。',
+      payload: null,
+      status: 1,
+      createdAt: addMinutes(SEED_TIMELINE.seedAt, -6),
+    },
+    {
+      messageSeq: 6n,
+      senderId: userA.id,
+      clientMessageId: 'seed-chat-6',
+      messageType: 1,
+      content: '葬送的芙莉莲动画做得很舒服，每集都很治愈。',
+      payload: null,
+      status: 1,
+      createdAt: addMinutes(SEED_TIMELINE.seedAt, -4),
+    },
+    {
+      messageSeq: 7n,
+      senderId: userB.id,
+      clientMessageId: 'seed-chat-7',
+      messageType: 1,
+      content: '对，节奏控制得很好。你有看间谍过家家吗？',
+      payload: null,
+      status: 1,
+      createdAt: addMinutes(SEED_TIMELINE.seedAt, -2),
+    },
   ] as const
 
   for (const fixture of messageFixtures) {
@@ -214,16 +254,16 @@ export async function seedMessageDomain(db: Db) {
     {
       userId: userA.id,
       role: 1,
-      lastReadMessageId: messageBySeq.get(2n)?.id ?? null,
-      lastReadAt: messageBySeq.get(2n)?.createdAt ?? null,
-      unreadCount: 1,
+      lastReadMessageId: messageBySeq.get(5n)?.id ?? null,
+      lastReadAt: messageBySeq.get(5n)?.createdAt ?? null,
+      unreadCount: 2,
       joinedAt: addMinutes(SEED_TIMELINE.seedAt, -20),
     },
     {
       userId: userB.id,
       role: 2,
-      lastReadMessageId: messageBySeq.get(3n)?.id ?? null,
-      lastReadAt: messageBySeq.get(3n)?.createdAt ?? null,
+      lastReadMessageId: messageBySeq.get(7n)?.id ?? null,
+      lastReadAt: messageBySeq.get(7n)?.createdAt ?? null,
       unreadCount: 0,
       joinedAt: addMinutes(SEED_TIMELINE.seedAt, -20),
     },
@@ -375,7 +415,7 @@ export async function seedMessageDomain(db: Db) {
       projectionKey: `announcement:notify:${announcement?.id ?? 42}:user:${userC.id}`,
       actorUserId: null,
       title: '春季版本更新公告',
-      content: '系统已更新到 2026.03 seed 版本，包含完整联调数据。',
+      content: '系统已更新到 2026.07 版本，包含完整联调数据。',
       payload: {
         object: {
           kind: 'announcement',
@@ -428,11 +468,11 @@ export async function seedMessageDomain(db: Db) {
 
   const metricPayload = {
     bucketAt: SEED_TIMELINE.chatBucket,
-    requestCount: 6,
-    ackSuccessCount: 6,
+    requestCount: 14,
+    ackSuccessCount: 14,
     ackErrorCount: 0,
-    ackLatencyTotalMs: 120n,
-    reconnectCount: 1,
+    ackLatencyTotalMs: 280n,
+    reconnectCount: 2,
     resyncTriggerCount: 1,
     resyncSuccessCount: 1,
   }
