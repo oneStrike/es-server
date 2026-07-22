@@ -18,14 +18,14 @@ import {
 const ADMIN_FIXTURE = {
   username: SEED_ADMIN_USERNAME,
   mobile: '13800138099',
-  avatar: createAvatar('seed-admin'),
+  avatar: createAvatar('admin-primary'),
   isEnabled: true,
   lastLoginAt: SEED_TIMELINE.seedAt,
   lastLoginIp: '127.0.0.1',
 }
 
 const ADMIN_TOKEN_FIXTURE = {
-  jti: 'seed-admin-access-token',
+  jti: 'admin-access-token',
   tokenType: TokenTypeEnum.ACCESS,
   expiresAt: new Date('2026-12-31T23:59:59.000Z'),
   deviceInfo: {
@@ -34,7 +34,7 @@ const ADMIN_TOKEN_FIXTURE = {
     browser: 'Seed Runner',
   },
   ipAddress: '127.0.0.1',
-  userAgent: 'seed-script/admin',
+  userAgent: 'mandu-admin/1.0.0',
 }
 
 export async function seedAdminDomain(db: Db) {

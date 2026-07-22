@@ -114,7 +114,7 @@ export async function seedMessageDomain(db: Db) {
     {
       messageSeq: 1n,
       senderId: userA.id,
-      clientMessageId: 'seed-chat-1',
+      clientMessageId: 'chat-1',
       messageType: 1,
       content: '你把进击的巨人前三卷的伏笔整理得很完整。',
       payload: null,
@@ -124,7 +124,7 @@ export async function seedMessageDomain(db: Db) {
     {
       messageSeq: 2n,
       senderId: userB.id,
-      clientMessageId: 'seed-chat-2',
+      clientMessageId: 'chat-2',
       messageType: 1,
       content: '我后面想把白夜行的人物线也整理成帖子。',
       payload: null,
@@ -134,17 +134,17 @@ export async function seedMessageDomain(db: Db) {
     {
       messageSeq: 3n,
       senderId: userB.id,
-      clientMessageId: 'seed-chat-3',
+      clientMessageId: 'chat-3',
       messageType: 2,
       content: '今晚如果有空，我们把论坛标签也统一一下。',
       payload: {
-        filePath: '/files/chat/image/2026-05-04/seed-chat-640x360.png',
+        filePath: '/files/chat/image/2026-07-21/forum-screenshot-640x360.png',
         fileCategory: 'image',
         mimeType: 'image/png',
         fileSize: 20480,
         width: 640,
         height: 360,
-        originalName: 'seed-chat.png',
+        originalName: 'forum-screenshot.png',
       },
       status: 1,
       createdAt: addMinutes(SEED_TIMELINE.seedAt, -10),
@@ -152,7 +152,7 @@ export async function seedMessageDomain(db: Db) {
     {
       messageSeq: 4n,
       senderId: userA.id,
-      clientMessageId: 'seed-chat-4',
+      clientMessageId: 'chat-4',
       messageType: 1,
       content: '咒术回战最近的话数作画也太稳了，感觉要追上去。',
       payload: null,
@@ -162,7 +162,7 @@ export async function seedMessageDomain(db: Db) {
     {
       messageSeq: 5n,
       senderId: userB.id,
-      clientMessageId: 'seed-chat-5',
+      clientMessageId: 'chat-5',
       messageType: 1,
       content: '同感！藤本树的链锯人第二季也快了吧，期待。',
       payload: null,
@@ -172,7 +172,7 @@ export async function seedMessageDomain(db: Db) {
     {
       messageSeq: 6n,
       senderId: userA.id,
-      clientMessageId: 'seed-chat-6',
+      clientMessageId: 'chat-6',
       messageType: 1,
       content: '葬送的芙莉莲动画做得很舒服，每集都很治愈。',
       payload: null,
@@ -182,7 +182,7 @@ export async function seedMessageDomain(db: Db) {
     {
       messageSeq: 7n,
       senderId: userB.id,
-      clientMessageId: 'seed-chat-7',
+      clientMessageId: 'chat-7',
       messageType: 1,
       content: '对，节奏控制得很好。你有看间谍过家家吗？',
       payload: null,

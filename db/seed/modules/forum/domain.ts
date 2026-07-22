@@ -54,7 +54,7 @@ import {
   SEED_TIMELINE,
 } from '../../shared'
 
-const FORUM_SEED_USER_AGENT = 'seed-script/forum-simulation'
+const FORUM_SEED_USER_AGENT = 'mandu-app/1.0.0'
 const FORUM_TOPIC_COMMENT_TARGET_TYPE = CommentTargetTypeEnum.FORUM_TOPIC
 const FORUM_TOPIC_LIKE_TARGET_TYPE = LikeTargetTypeEnum.FORUM_TOPIC
 const FORUM_TOPIC_FAVORITE_TARGET_TYPE = FavoriteTargetTypeEnum.FORUM_TOPIC
@@ -1140,7 +1140,7 @@ export async function seedForumReferenceDomain(db: Db) {
       sortOrder: sectionFixture.sortOrder,
       isEnabled: true,
       topicReviewPolicy: sectionFixture.topicReviewPolicy,
-      remark: 'seed: 二次元论坛演示板块',
+      remark: '二次元论坛板块',
       topicCount: existing?.topicCount ?? 0,
       commentCount: existing?.commentCount ?? 0,
       followersCount: existing?.followersCount ?? 0,

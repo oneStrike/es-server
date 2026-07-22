@@ -5,7 +5,7 @@ export const SEED_ADMIN_USERNAME =
   process.env.SEED_ADMIN_USERNAME?.trim() || 'admin'
 
 export const SEED_ACCOUNT_PASSWORD =
-  process.env.SEED_ACCOUNT_PASSWORD?.trim() || 'Seed@123456'
+  process.env.SEED_ACCOUNT_PASSWORD?.trim() || 'Admin@2026!'
 
 const SEED_READER_ACCOUNT_BASE_PREFIXES = [
   'tsuki',
@@ -45,7 +45,7 @@ const SEED_READER_ACCOUNT_BASE_SUFFIXES = [
   'zine',
 ] as const
 
-export const SEED_READER_LEGACY_ACCOUNT_PREFIX = 'seed_reader_'
+export const SEED_READER_LEGACY_ACCOUNT_PREFIX = 'reader_'
 
 export const SEED_READER_ACCOUNT_SLUGS = [
   'tsukimi-komin',
@@ -59,7 +59,7 @@ export const SEED_READER_ACCOUNT_SLUGS = [
   ),
 ].slice(0, 150)
 
-const SEED_PASSWORD_SALT = 'seed-password-salt-v1'
+const SEED_PASSWORD_SALT = 'mandu-password-salt-v1'
 const scryptService = new ScryptService()
 
 // 生成 seed 账号入库密码哈希，明文只作为本地联调登录口令保留在 seed 层。
