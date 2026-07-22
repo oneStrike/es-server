@@ -1234,7 +1234,7 @@ async function resetForumSimulationData(db: Db) {
             '谷子与痛包',
             'Cosplay 与漫展'
           )
-          AND COALESCE(remark, '') = 'seed: 二次元论坛演示板块'
+          AND COALESCE(remark, '') = '二次元论坛板块'
         )
     ),
     target_topics AS (
@@ -1449,7 +1449,7 @@ async function ensureForumModerator(db: Db, seedUsers: SeedUserRow[]) {
     roleType: 1,
     permissions: [1, 2, 3, 4, 5, 6],
     isEnabled: true,
-    remark: 'seed: 论坛演示超级版主',
+    remark: '初始化超级版主',
   }
 
   if (!moderator) {
@@ -1486,8 +1486,8 @@ async function ensureForumModerator(db: Db, seedUsers: SeedUserRow[]) {
       status: 1,
       permissions: [1, 2, 5],
       reason: '长期整理追更楼和新番索引，希望协助维护讨论秩序。',
-      auditReason: 'seed: 发帖质量稳定，通过演示申请。',
-      remark: 'seed: 版主申请演示记录',
+      auditReason: '发帖质量稳定，通过申请',
+      remark: '初始化版主申请记录',
       auditAt: SEED_TIMELINE.previousDay,
     }
     if (!existingApplication) {
@@ -1630,7 +1630,7 @@ async function seedSectionTopics(
       isHidden: false,
       auditStatus: 1,
       auditRole: 0,
-      auditReason: 'seed: 演示内容自动通过',
+      auditReason: '自动通过',
       auditAt: addMinutes(createdAt, 3),
       version: existingTopic?.version ?? 0,
       sensitiveWordHits: [],
@@ -1638,7 +1638,7 @@ async function seedSectionTopics(
       geoProvince: author.lastLoginGeoProvince,
       geoCity: author.lastLoginGeoCity,
       geoIsp: author.lastLoginGeoIsp,
-      geoSource: 'seed',
+      geoSource: 'ip',
       viewCount: existingTopic?.viewCount ?? 0,
       likeCount: existingTopic?.likeCount ?? 0,
       commentCount: existingTopic?.commentCount ?? 0,
@@ -1695,8 +1695,8 @@ async function seedSectionTopics(
           ? ForumModeratorActionTypeEnum.PIN_TOPIC
           : ForumModeratorActionTypeEnum.FEATURE_TOPIC,
         actionDescription: isPinned
-          ? 'seed: 演示置顶主题'
-          : 'seed: 演示精选主题',
+          ? '置顶主题'
+          : '精选主题',
         createdAt: addMinutes(createdAt, 4),
       })
     }
@@ -1799,7 +1799,7 @@ async function seedTopicComments(
       auditStatus: 1,
       auditById: null,
       auditRole: null,
-      auditReason: 'seed: 演示评论自动通过',
+      auditReason: '自动通过',
       auditAt: addMinutes(createdAt, 2),
       likeCount: existingComment?.likeCount ?? 0,
       sensitiveWordHits: [],
@@ -1807,7 +1807,7 @@ async function seedTopicComments(
       geoProvince: commenter.lastLoginGeoProvince,
       geoCity: commenter.lastLoginGeoCity,
       geoIsp: commenter.lastLoginGeoIsp,
-      geoSource: 'seed',
+      geoSource: 'ip',
       createdAt,
     }
 
@@ -2363,7 +2363,7 @@ async function ensureForumUserActionLog(
       afterData: JSON.stringify(input.afterData),
       ipAddress: input.ipAddress,
       userAgent: FORUM_SEED_USER_AGENT,
-      geoSource: 'seed',
+      geoSource: 'ip',
       createdAt: input.createdAt,
     })
   }
@@ -3106,7 +3106,7 @@ async function ensureSeedHashtagRecords(
       displayName: candidate.displayName.slice(0, 64),
       auditStatus: AuditStatusEnum.APPROVED,
       isHidden: false,
-      auditReason: 'seed: 演示话题自动通过',
+      auditReason: '自动通过',
       auditAt: SEED_TIMELINE.previousDay,
       deletedAt: null,
     }

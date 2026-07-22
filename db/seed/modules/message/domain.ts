@@ -346,7 +346,7 @@ export async function seedMessageDomain(db: Db) {
     {
       receiverUserId: commentTopic?.userId ?? userA.id,
       categoryKey: 'topic_commented',
-      projectionKey: 'seed:notif:topic-comment:aot',
+      projectionKey: 'demo:notif:topic-comment:aot',
       actorUserId: rootReply?.userId ?? userB.id,
       title: `${topicCommentActorNickname} 评论了你的主题`,
       content: '我觉得第一卷就把未来冲突埋得很深。',
@@ -374,7 +374,7 @@ export async function seedMessageDomain(db: Db) {
     {
       receiverUserId: userB.id,
       categoryKey: 'comment_reply',
-      projectionKey: 'seed:notif:comment-reply:aot',
+      projectionKey: 'demo:notif:comment-reply:aot',
       actorUserId: userA.id,
       title: '小光 回复了你的评论',
       content: '而且艾伦和调查兵团的立场差异很早就有预警。',

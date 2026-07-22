@@ -31,7 +31,7 @@ const ADMIN_TOKEN_FIXTURE = {
   deviceInfo: {
     device: 'desktop',
     os: 'Windows',
-    browser: 'Seed Runner',
+    browser: 'Chrome',
   },
   ipAddress: '127.0.0.1',
   userAgent: 'mandu-admin/1.0.0',

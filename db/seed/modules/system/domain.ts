@@ -288,7 +288,7 @@ export async function seedSystemOperationalData(db: Db) {
     updatedById: admin?.id,
     aliyunConfig: {
       regionId: 'cn-shanghai',
-      bucket: 'seed-bucket',
+      bucket: 'mandu-assets',
     },
     siteConfig: {
       name: '漫读社区',
@@ -297,7 +297,7 @@ export async function seedSystemOperationalData(db: Db) {
     },
     maintenanceConfig: {
       enabled: false,
-      message: 'seed 环境维护开关关闭',
+      message: '系统维护模式已关闭',
     },
     contentReviewPolicy: {
       severe: 'block',
@@ -371,7 +371,7 @@ export async function seedSystemOperationalData(db: Db) {
       apiType: ApiTypeEnum.APP,
       method: 'POST',
       path: '/api/app/chat/send-message',
-      params: { bizKey: 'seed-chat' },
+      params: { bizKey: 'demo-chat' },
       ip: '127.0.0.1',
       userAgent: 'mandu-app/1.0.0',
       device: { platform: 'mobile', role: 'reader' },

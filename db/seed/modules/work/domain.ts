@@ -303,7 +303,7 @@ const WORK_FIXTURES = [
     isPublished: true, isRecommended: true, isHot: true, isNew: true, publishAt: '2026-05-10',
     lastUpdated: addHours(SEED_TIMELINE.releaseDay, 15), viewRule: 1, requiredViewLevelName: null,
     chapterPrice: 26, canComment: true, recommendWeight: 8.8, popularity: 8400, rating: 8.6,
-    categories: ['悬疑', '现实'], tags: ['高热度', '新番推荐', '动画改编'], authors: ['赤坂茜'],
+    categories: ['悬疑', '日常'], tags: ['高热度', '新番推荐', '动画改编'], authors: ['赤坂茜'],
     chapters: [
       { title: '第1话 推的孩子', subtitle: '转生', sortOrder: 1, isPreview: true, isPublished: true, viewRule: 1, price: 0, content: '双胞胎转生为推的孩子，新的故事开始。', wordCount: 1100 },
       { title: '第2话 娱乐圈', subtitle: '修行', sortOrder: 2, isPreview: false, isPublished: true, viewRule: 3, price: 26, content: '在娱乐圈中追寻真相。', wordCount: 1200 },
