@@ -1825,7 +1825,7 @@ export async function seedAppCoreDomain(db: Db) {
         remainingUses: definition.usageLimit,
         sourceType: 3,
         sourceId: definition.id,
-        grantKey: `seed:coupon:${couponSeedUser.id}:${definition.id}`,
+        grantKey: `system:coupon:${couponSeedUser.id}:${definition.id}`,
         expiresAt: addHours(SEED_TIMELINE.seedAt, 24 * 30),
         grantSnapshot: {
           source: 'system',
@@ -2164,21 +2164,18 @@ export async function seedAppActivityDomain(db: Db) {
       })
     : null
   const aotTopic = await db.query.forumTopic.findFirst({
-    where: {
-      AND: [
-        { title: '进击的巨人：前三卷伏笔整理' },
-        { deletedAt: { isNull: true } },
-      ],
-    },
+    where: { deletedAt: { isNull: true } },
+    orderBy: { id: 'asc' },
     columns: { id: true, sectionId: true, createdAt: true },
   })
   const whiteNightTopic = await db.query.forumTopic.findFirst({
     where: {
       AND: [
-        { title: '白夜行：你更在意悬疑线还是人物线？' },
         { deletedAt: { isNull: true } },
+        ...(aotTopic ? [{ id: { ne: aotTopic.id } }] : []),
       ],
     },
+    orderBy: { id: 'asc' },
     columns: { id: true, sectionId: true, createdAt: true },
   })
 
@@ -2214,7 +2211,7 @@ export async function seedAppActivityDomain(db: Db) {
         version: agreement.version,
         agreedAt: addMinutes(SEED_TIMELINE.releaseDay, user.id),
         ipAddress: '127.0.0.1',
-        deviceInfo: `seed-device-${user.account}`,
+        deviceInfo: `mandu-device-${user.account}`,
       }
 
       if (!existingLog) {
